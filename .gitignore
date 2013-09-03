@@ -13,7 +13,6 @@ gen/
 R.java
 
 # Local configuration file
-local.properties
 
 # Packages #
 ############
@@ -26,8 +25,15 @@ local.properties
 
 # Eclipse IDE config files #
 ####################
-#.project
-#.pydevproject
+.project
+.pydevproject
+.metadata
+.settings/
+.classpath 
+local.properties
+.loadpath 
+
+# vim 
 *.swp # vim auto save file
 # Logs and databases #
 ######################
