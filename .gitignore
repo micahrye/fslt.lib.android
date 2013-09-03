@@ -1,20 +1,40 @@
-# built application files
-*.apk
-*.ap_
-
-# files for the dex VM
-*.dex
-
-# Java class files
-*.class
-
-# generated files
+# Directories  #
+################
 bin/
 gen/
 
-# Local configuration file (sdk path, etc)
+# Compiled files # 
+##################
+*.pyc
+*.apk
+*.ap_
+*.dex
+*.class
+R.java
+
+# Local configuration file
 local.properties
 
-# Eclipse project files
-.classpath
-.project
+# Packages #
+############
+*.tar 
+*.gz
+*.zip
+*.rar
+*.iso
+*.dmg
+
+# Eclipse IDE config files #
+####################
+#.project
+#.pydevproject
+*.swp # vim auto save file
+# Logs and databases #
+######################
+
+# OS generated #
+################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
