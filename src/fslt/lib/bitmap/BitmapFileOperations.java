@@ -3,7 +3,7 @@
  *  
  * 
  */
-package fslt.lib.bitmap.utilities;
+package fslt.lib.bitmap;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,7 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import fslt.lib.file.utilites.FileOperations;
+import fslt.lib.file.FileOperations;
 
 public class BitmapFileOperations {
 

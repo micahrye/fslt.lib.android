@@ -3,7 +3,7 @@
  *  
  * 
  */
-package fslt.lib.file.utilites;
+package fslt.lib.file;
 
 import java.io.BufferedReader;
 import java.io.File;

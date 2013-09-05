@@ -14,7 +14,7 @@
  * This module is provided "as is", without 8844warranties of any kind.
 */
 
-package fslt.lib.file.utilites;
+package fslt.lib.file;
 
 /**
 * A Base64 encoder/decoder.

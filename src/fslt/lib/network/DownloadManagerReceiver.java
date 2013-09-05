@@ -8,7 +8,7 @@ package fslt.lib.network;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import fslt.lib.file.utilites.UnzipService;
+import fslt.lib.file.UnzipService;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
