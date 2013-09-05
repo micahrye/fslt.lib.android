@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * <pre>
  * {@code
  *		// initializing and starting 
- * 		SpeechRecognition mSoundLevelDetection = new SoundLevelDetection(mCtx); 
+ * 		SoundLevelDetection mSoundLevelDetection = new SoundLevelDetection(mCtx); 
  *		mSoundLevelDetection.openMicrophone();
  *		mSoundLevelDetection.startSoundLevelDetection();
  *		//receive broadcast
@@ -45,7 +45,7 @@ import java.util.ArrayList;
  *			}
  *    	};
  *		LocalBroadcastManager.getInstance(mCtx).registerReceiver(mSoundLevelReceiver,
- *				new IntentFilter(mSoundLevelDetection.getAtctionName()));
+ *				new IntentFilter(mSoundLevelDetection.getActionName()));
  *		//stopping and closing up shop
  *    	mSoundLevelDetection.closeMicrophone();
  *    	LocalBroadcastManager.getInstance(this.mCtx).unregisterReceiver(mSoundLevelReceiver);
@@ -64,7 +64,7 @@ public class SoundLevelDetection {
 	public static boolean NOISY_ENVIRONMENT = true; 
 	private int mPollInterval  = 100;
     private Double mThreshold = (double) 87; //85;
-    private Double mAmbientNoiseThreshold = (double) 55; //55;
+    private Double mAmbientNoiseThreshold = (double) 65;
     private CheckAmbientNoiseTask mAmbientNoiseTask; 
     private SoundLevelTask mSoundLevelTask;
 	
@@ -181,14 +181,14 @@ public class SoundLevelDetection {
 		    }
 		    try{
 		    	mRecorder.start();
-		    	return mRecorderStarted = true; 
+		    	mRecorderStarted = true; 
 		    }catch(IllegalStateException e){
 		    	e.printStackTrace();
 		    	mRecorderStarted = false;
 		    	mRecorder = null;
 		    }
 		}
-		return false;
+		return mRecorderStarted;
 	}
 	/*
 	 * Close microphone opened by {@openMicrophone}.  
@@ -217,9 +217,10 @@ public class SoundLevelDetection {
 	 * @see SoundLevelTask
 	 */
 	public void startSoundLevelDetection(){
-		if( openMicrophone() ) {
-			mAmbientNoiseTask.execute(); 
-		    mSoundLevelTask.execute(); 
+		if( mRecorderStarted ) {
+			//Allow for concurrent running of tasks
+			mAmbientNoiseTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		    mSoundLevelTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 	}
 	/*
@@ -288,14 +289,17 @@ public class SoundLevelDetection {
 			int sampleRate = 10;
 			Double[] samples = new Double[sampleRate];
             Double sum = 0.0;    
+            Double dec = 0.0;
             //NOTE: if we are polling for sound level ever N ms then 
             //ambient is updating environment noise var every sampleRate*N ms
             while(true){
+            	sum = 0.0;
+            	dec = 0.0;
             	for (int i = 0 ; i < sampleRate; i ++) {
             		if(this.isCancelled()){
             			return NOISY_ENVIRONMENT = true; 
             		}
-            		Double dec = getDecibels(getAmplitude()); 
+            		dec = getDecibels(getAmplitude()); 
             		samples[i] = dec;
             		sum += dec;
             		try {
@@ -315,7 +319,9 @@ public class SoundLevelDetection {
             	} else {
             		Log.d(TAG, "Noise level is fine. Noise = " + avg_dec.toString());
             		NOISY_ENVIRONMENT = false; 
+            		//return true;
             	}
+            	
             }
 		}
     }
