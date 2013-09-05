@@ -18,9 +18,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 /*
  * FaceDetection allows for fast detection of faces from video preview. When
@@ -30,6 +33,8 @@ import android.widget.FrameLayout;
  * and can be changed, not that if you do not want the preview to display
  * set size to 0x0. The default image size, for processing for faces, is 
  * 320x240, typically this should not be changed unless you have a good reason. 
+ * <p>
+ * Note that by default the camera is in landscape view.
  * <p>
  * Example usage from an activity: 
  * <pre>
@@ -59,31 +64,32 @@ import android.widget.FrameLayout;
  */
 public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
 	private static final String TAG = CameraFaceDetectionView.class.getSimpleName(); 
-	
+
 	private String mActionName = "fslt.lib.actions.facedetection";
 	private Context mCtx; 
+	//private static Display mDisplay; 
 	private int mSurfaceWidth = 320; 
 	private int mSurfaceHeight = 240; 
 	private SurfaceHolder mSurfaceHolder;
 	private FaceDetectionAsyncTask mFDAsyncTask;
 	private boolean mFrontCam = false;
 	private boolean mRearCam = false; 
-	
+
 	private Camera mCamera;
 	public static final int IMAGE_WIDTH = 320;
 	public static final int IMAGE_HEIGHT = 240;
 	private byte[] mCopiedData = new byte[IMAGE_WIDTH*IMAGE_HEIGHT];
 	private int[] mDecodedData = new int[IMAGE_WIDTH*IMAGE_HEIGHT];
-	
+
 	private FaceDetector mFaceDetector = new FaceDetector(IMAGE_WIDTH, IMAGE_HEIGHT, 1);
 	private Bitmap mBitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.RGB_565);
 	private Face[] mFaces = new Face[1];
-	
+
 	private boolean mBusyFindFaces = false; 
 	// set by caller
 	public boolean runFaceDetector = false;
 	private int OPEN_CAMERA_FACING = Camera.CameraInfo.CAMERA_FACING_FRONT; 
-	
+
 	/*
 	 * Constructor initializes aspects of the surface
 	 * 
@@ -96,7 +102,7 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 		mSurfaceHolder = getHolder(); 
 		mSurfaceHolder.addCallback(this);
 		mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		
+
 		PackageManager pm = context.getPackageManager();
 		//Must have a targetSdk >= 9 defined in the AndroidManifest
 		mFrontCam = pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
@@ -126,6 +132,10 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 	 */
 	public boolean hasBackFacingCamera(){
 		return mRearCam; 
+	}
+	public void setSurfaceSize(int width, int height){
+		setSurfaceWidth(width);
+		setSurfaceHeight(height);
 	}
 	/*
 	 * Set the preview surface width 
@@ -200,8 +210,8 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 	 */
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
-				int height) {
-		
+			int height) {
+
 		FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) this.getLayoutParams();
 		layoutParams.width = mSurfaceWidth;
 		layoutParams.height = mSurfaceHeight;
@@ -210,12 +220,47 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 		Camera.Parameters parameters = mCamera.getParameters();
 
 		parameters.setPreviewSize(IMAGE_WIDTH, IMAGE_HEIGHT);
-		parameters.setPreviewFrameRate(15);
+		parameters.setPreviewFpsRange(15000, 15000);
 		mCopiedData = new byte[IMAGE_WIDTH*IMAGE_HEIGHT];
 		mDecodedData = new int[IMAGE_WIDTH*IMAGE_HEIGHT];
 		mCamera.setParameters(parameters);
 		mCamera.startPreview();
 	}
+	/**
+	 * NOTE, currently should use landscape mode for camera face detection. 
+	 * 
+	 * @param cameraId
+	 * 				cameraId of front or back camera, which ever is active
+	 * @return
+	 * 				return degree of orientation
+	 */
+	/*
+	private int setCameraDisplayOrientation(int cameraId ){
+
+		android.hardware.Camera.CameraInfo info =
+	             new android.hardware.Camera.CameraInfo();
+	    android.hardware.Camera.getCameraInfo(cameraId, info);
+		int rotation = mDisplay.getRotation(); 
+		int degrees = 0; 
+		switch (rotation) {
+			case Surface.ROTATION_0: degrees = 0; break;
+			case Surface.ROTATION_90: degrees = 90; break;
+			case Surface.ROTATION_180: degrees = 180; break;
+			case Surface.ROTATION_270: degrees = 270; break;
+		}
+		int result;
+		if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+			result = (info.orientation + degrees) % 360;
+			result = (360 - result) % 360;  // compensate the mirror
+		} else {  // back-facing
+			result = (info.orientation - degrees + 360) % 360;
+		}
+
+		return result; 
+	}
+	*/
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see android.view.SurfaceHolder.Callback#surfaceCreated(android.view.SurfaceHolder)
@@ -255,6 +300,7 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 		mCamera.release();
 		mCamera = null;
 	}
+	private int mCameraId; 
 	/*
 	 * Open desired device camera
 	 * 
@@ -266,23 +312,24 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 	 * 				or problem opening camera a null object is returned.  
 	 */
 	private Camera openCamera(int openCameraFacing) {
-	    int cameraCount = 0;
-	    Camera cam = null;
-	    Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-	    cameraCount = Camera.getNumberOfCameras();
-	    for ( int camIdx = 0; camIdx < cameraCount; camIdx++ ) {
-	        Camera.getCameraInfo( camIdx, cameraInfo );
-	        if ( cameraInfo.facing == openCameraFacing  ) {
-	            try {
-	                cam = Camera.open( camIdx );
-	            } catch (RuntimeException e) {
-	                Log.e(TAG, "Camera failed to open: " + e.getLocalizedMessage());
-	            }
-	        }
-	    }
-	    // IF only 1 camera, but not camera wanted by user should we return null
-	    // or should we return the only camera? 
-	    return cam;
+		int cameraCount = 0;
+		Camera cam = null;
+		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+		cameraCount = Camera.getNumberOfCameras();
+		for ( int camIdx = 0; camIdx < cameraCount; camIdx++ ) {
+			Camera.getCameraInfo( camIdx, cameraInfo );
+			if ( cameraInfo.facing == openCameraFacing  ) {
+				try {
+					mCameraId = camIdx;
+					cam = Camera.open( mCameraId );
+				} catch (RuntimeException e) {
+					Log.e(TAG, "Camera failed to open: " + e.getLocalizedMessage());
+				}
+			}
+		}
+		// IF only 1 camera, but not camera wanted by user should we return null
+		// or should we return the only camera? 
+		return cam;
 	}
 	/*
 	 *  FaceDetectionAsyncTask is a AsyncTask that takes a preview image
@@ -297,7 +344,7 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 
 		@Override
 		protected Boolean doInBackground(byte[]... _images) {
-			
+
 			for (int i = 0; i < mCopiedData.length; i++) {
 				int pixel = mCopiedData[i]; 
 				//pixel = pixel > 0 ? pixel : pixel + 255;
@@ -317,7 +364,7 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 			}catch(IllegalArgumentException e){
 				//TODO: what do we want to do on exception ? 
 				throw new RuntimeException("Incorrect deminstions in setup of " +
-							"CameraFaceDetction. findFaces IllegaleArgumentExcpetion");
+						"CameraFaceDetction. findFaces IllegaleArgumentExcpetion");
 			}
 			return false;
 		}
@@ -331,13 +378,14 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 		protected void onPostExecute(Boolean result){
 			mBusyFindFaces = false; 
 			if(result){
+				Toast.makeText(mCtx, "Found your face", 500).show();
 				//TODO: Should we send back the face? 
 				Intent intent = new Intent();
 				intent.setAction(mActionName);
 				LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
 			}
 		}
-		
+
 	}
 
 }

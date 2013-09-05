@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import fslt.lib.file.utilites.FileOperations;
 
@@ -23,9 +24,10 @@ public class BitmapFileOperations {
 
 	public static final int INTERANL_STORAGE = FileOperations.INTERANL_STORAGE;
 	public static final int EXTERNAL_STORAGE = FileOperations.EXTERNAL_STORAGE; 
+	public static final int ASSETS_STORAGE = FileOperations.ASSETS_STORAGE; 
 	
 	private Context mCtx; 
-	private Preference mPrefs; 
+	private Preference mPrefs;
 	private DisplayMetrics mDisplayMetrics;
 	private FileOperations mFileOperations; 
 	
@@ -40,7 +42,7 @@ public class BitmapFileOperations {
 	 * 
 	 * @param  location
 	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
-	 *  			to indicate root of file location.
+	 *  			or FileOperations.ASSETS_STORAGE to indicate root of file location.
 	 *  @param  fileName
 	 * 				The file name including any parent directory structure 
 	 * 				information that will all be relative to the storage 'location' 
@@ -58,26 +60,41 @@ public class BitmapFileOperations {
 	public Bitmap openBitmapFromStorageLocation(int location, String fileName, 
 							boolean openWithScreenDpi) throws IOException{
 		File file = null;
-		file = getBitmapFileFromStorageLocation(location, fileName);
-		if( file == null ) return null; 
+		InputStream inputStream = null; 
+		Bitmap bmp = null; 
+		inputStream = getBitmapInputStreamFromStorageLocation(location, fileName);
+		if( inputStream == null ) return null; 
 		BitmapFactory.Options options = getDefaultBitmapOptionsForScreenDpi(openWithScreenDpi);
-		String filePath = file.getAbsolutePath(); 
-		Bitmap bmp = BitmapFactory.decodeFile(filePath, options); 
+		bmp = BitmapFactory.decodeStream(inputStream, null, options);
 		try{
-			bmp.setDensity(options.inDensity);
-		}catch(NullPointerException e){
-			throw new IOException();
+			inputStream.close();
+		}catch(IOException e){
+			// hum
 		}
 		
 		return bmp;
-	}	
+	}
+	/**
+	 * 
+	 * @param location
+	 * @param fileName
+	 * @return
+	 * @see openBitmapFromStorageLocation
+	 */
+	private InputStream getBitmapInputStreamFromStorageLocation(int location, String fileName){
+		InputStream inputStream = null; 
+
+		inputStream = mFileOperations.getInputStreamFromStorageLocation(location, fileName);
+		
+		return inputStream;
+	}
 	/**
 	 * Open bitmap file from storage location at size specified by input parameters  
 	 * 
 	 * @param  location
 	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
-	 *  			to indicate root of file location.
-	 *  @param  fileName
+	 *  			or FileOperations.ASSETS_STORAGE to indicate root of file location.
+	 * @param  fileName
 	 * 				The file name including any parent directory structure 
 	 * 				information that will all be relative to the storage 'location' 
 	 * 				directory.
@@ -97,12 +114,13 @@ public class BitmapFileOperations {
 	public Bitmap openBitmapAtSizeFromStorageLocation(int location, String fileName, 
 				int width, int height, boolean openWithScreenDpi) throws IOException{
 		
-		File file = getBitmapFileFromStorageLocation(location, fileName);
+		InputStream inputStream = getBitmapInputStreamFromStorageLocation(location, fileName);
+		
 		BitmapFactory.Options options = new BitmapFactory.Options();
 		//if(openWithScreenDpi) options = getDefaultBitmapOptionsForScreenDpi(openWithScreenDpi); 
 		options.inJustDecodeBounds = true;
-		String filePath = file.getAbsolutePath();
-		Bitmap bmp = BitmapFactory.decodeFile(filePath, options);
+		Bitmap bmp = null; 
+		bmp = BitmapFactory.decodeStream(inputStream, null, options); 
 		
 		int sampleSize = calculateInSampleSize(options, width, height);
 		if(openWithScreenDpi) options = getDefaultBitmapOptionsForScreenDpi(openWithScreenDpi);
@@ -111,22 +129,36 @@ public class BitmapFileOperations {
 		// sample the image to open as close to desired size as possible, this will 
 		// be significantly less memory usage when large image that you want to open
 		// at small size. 
-		bmp = BitmapFactory.decodeFile(filePath, options);
-		
+		inputStream = getBitmapInputStreamFromStorageLocation(location, fileName);
+		bmp = BitmapFactory.decodeStream(inputStream, null, options);
+		inputStream.close();
 		return Bitmap.createScaledBitmap(bmp, width, height, true);
 	}
+	/**
+	 * Given actual image width/height in options and desired width/height
+	 * calculate the appropriate in sample size to read image from file. 
+	 * 
+	 * @param options
+	 * 				BitmapFactory.Options that contain bitmap meta-data for the
+	 * 				bitmap to be used for calculations 
+	 * @param desiredWidth
+	 * 				Desired width of bitmap when opened
+	 * @param desiredHeight
+	 * 				Desired height of bitmap when opened
+	 * @return int	
+	 * 				sample size to use given bitmap and desired open size
+	 */
 	private static int calculateInSampleSize(BitmapFactory.Options options, 
-				int reqWidth, int reqHeight){
+				int desiredWidth, int desiredHeight){
 		// Raw height and width of image
 	    final int height = options.outHeight;
 	    final int width = options.outWidth;
 	    int inSampleSize = 1;
 
-	    if (height > reqHeight || width > reqWidth) {
-
+	    if (height > desiredHeight || width > desiredWidth) {
 	        // Calculate ratios of height and width to requested height and width
-	        final int heightRatio = Math.round((float) height / (float) reqHeight);
-	        final int widthRatio = Math.round((float) width / (float) reqWidth);
+	        final int heightRatio = Math.round((float) height / (float) desiredHeight);
+	        final int widthRatio = Math.round((float) width / (float) desiredWidth);
 
 	        // Choose the smallest ratio as inSampleSize value, this will guarantee
 	        // a final image with both dimensions larger than or equal to the
@@ -135,21 +167,11 @@ public class BitmapFileOperations {
 	    }
 	    return inSampleSize;
 	}
-	
-	private File getBitmapFileFromStorageLocation(int location, String fileName) throws IOException{
-		File file = null; 
-		if(location == EXTERNAL_STORAGE){
-			if(!mFileOperations.externalStorageAvailable()){
-				//TODO: talk with others, do we want to throw an exception or something else?
-				throw new IOException("sdcard not readable, cannot open file");
-			}
-			//TODO: think about how you want to handle possible nullpointerexception from null fileName
-			file = new File(Environment.getExternalStorageDirectory(), fileName);
-		}else if(location == INTERANL_STORAGE){
-			file = new File(new File(mCtx.getFilesDir(), ""), fileName);
-		}
-		return file;
-	}
+	/**
+	 * Get FileOutputStream for bitmap at storage location 
+	 * 
+	 * @see saveBitmapToStorageLocation
+	 */
 	private FileOutputStream getBitmapFileSaveLocation(int location, String fileName) throws IOException{
 		FileOutputStream file = null; 
 		if(location == EXTERNAL_STORAGE){
@@ -160,7 +182,7 @@ public class BitmapFileOperations {
 			//TODO: think about how you want to handle possible nullpointerexception from null fileName
 			file = new FileOutputStream(Environment.getExternalStorageDirectory() + fileName);
 		}else if(location == INTERANL_STORAGE){
-			String path = new File(mCtx.getFilesDir(), "").getAbsolutePath() + "/"+fileName;
+			String path = new File(mCtx.getFilesDir(), "").getAbsolutePath() +fileName;
 			try{
 				file = new FileOutputStream(path);
 			}catch(FileNotFoundException e){
@@ -169,7 +191,7 @@ public class BitmapFileOperations {
 		}
 		return file;
 	}
-	/*
+	/**
 	 * Set options used when decoding bitmap based on the screenDpi
 	 * 
 	 * @param screenDpi 
@@ -192,7 +214,22 @@ public class BitmapFileOperations {
 		options.inScaled = false;
 		return options; 
 	}
-	
+	/**
+	 * Save bitmap to INTERANL_STORAGE or EXTERNAL_STORAGE, note that these are the only two
+	 * locations that can be saved to, you cannot save to assets or resources folders. 
+	 * 
+	 * @param  location
+	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
+	 *  			to indicate root of file location.
+	 * @param  fileName
+	 * 				The file name including any parent directory structure 
+	 * 				information that will all be relative to the storage 'location' 
+	 * 				directory.
+	 * @param bmp
+	 * 				Bitmap file to save to storage location
+	 * @throws
+	 * 				IOException
+	 */
 	public void saveBitmapToStorageLocation(int location, String fileName, Bitmap bmp) throws IOException{
 		FileOutputStream fOut = null;//new FileOutputStream(Environment.getExternalStorageDirectory() + fileName);
 		fOut = getBitmapFileSaveLocation(location, fileName);

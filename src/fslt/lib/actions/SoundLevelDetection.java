@@ -36,7 +36,7 @@ import java.util.ArrayList;
  *		// initializing and starting 
  * 		SpeechRecognition mSoundLevelDetection = new SoundLevelDetection(mCtx); 
  *		mSoundLevelDetection.openMicrophone();
- *		mSoundLevelDetection.startSpeechListener();
+ *		mSoundLevelDetection.startSoundLevelDetection();
  *		//receive broadcast
  *		BroadcastReceiver mSoundLevelReceiver = new BroadcastReceiver(){
  *			@Override

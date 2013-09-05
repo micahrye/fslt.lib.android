@@ -33,7 +33,8 @@ import android.util.Log;
  * </pre>
  */
 public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
-
+	//TODO: probably want a way to check if download manager is downloading a file and if so 
+	//don't download it again. check DownloadManager.STATUS_RUNNING | STATUS_PENDING | STATUS_PAUSED
 	private final static String TAG = DownloadManagerReceiver.class.getSimpleName(); 
 	public String mPathInfo = null; 
 	//TODO: since this is a broadcast receiver that  

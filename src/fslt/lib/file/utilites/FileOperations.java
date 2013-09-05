@@ -13,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
@@ -21,6 +22,7 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.os.Environment;
 import android.util.Log;
 
@@ -29,18 +31,22 @@ public class FileOperations {
 	
 	public static final int INTERANL_STORAGE = 1;
 	public static final int EXTERNAL_STORAGE = 2; 
+	public static final int ASSETS_STORAGE = 3; 
+	
 	private Context mCtx; 
+	public static AssetManager assets;
 	
 	public FileOperations(Context context){
 		mCtx = context;
+		assets = mCtx.getAssets();
 	}
-	/*
+	/**
 	 * Make directory and directory parent path if it does not exist 
 	 * as subdirectory of the root internal or external storage location. 
 	 * 
 	 * @param  location
 	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
-	 *  			to indicate root of file location.
+	 *  			or FileOperations.ASSETS_STORAGE to indicate root of file location.
 	 * @param  dirName
 	 * 				The directory name including any parent directory structure 
 	 * 				information that will be all under the storage location 
@@ -68,7 +74,7 @@ public class FileOperations {
 		}
 		return false; 
 	}
-	/*
+	/**
 	 * Check if leading character in path is '/', if not add '/' to 
 	 * path string. 
 	 */
@@ -78,7 +84,7 @@ public class FileOperations {
 		if( forwardSlash != firstChar ) path = forwardSlash + path; 
 		return path; 
 	}
-	/*
+	/**
 	 * Check if external storage is available for use. 
 	 * 
 	 * @return boolean
@@ -94,13 +100,12 @@ public class FileOperations {
 	    }
 	    return false; 
 	}
-	
-	/*
-	 * Write data (string) output to file
+	/**
+	 * Write string data output to file
 	 * 
 	 * @param  location
 	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
-	 *  			to indicate root of file location.
+	 *  			to indicate root of file location. Note that you cannot write to assets.
 	 * @param output
 	 * 			String output data to write to file as string. 
 	 * @param fileName
@@ -110,20 +115,20 @@ public class FileOperations {
 	 * @return boolean
 	 * 			Return true if writing data successful, false otherwise. 
 	 */
-	public boolean writeDataToLocation(int location, String output, String fileName){
+	public boolean writeStringToStorageLocation(int location, String output, String fileName){
 		fileName = checkLeadingForwardSlash(fileName);
 		if(location == EXTERNAL_STORAGE){
 			if(!externalStorageAvailable()) return false; 
 			//TODO: think about how you want to handle possible nullpointerexception from null fileName
 			File externalStorageLocation = new File(Environment.getExternalStorageDirectory(), fileName);
-			return writeOutputToFileAndClose(output, externalStorageLocation); 
+			return writeStringOutputToFileAndClose(output, externalStorageLocation); 
 		}else if(location == INTERANL_STORAGE){
 			File internalStorageLocation = new File(new File(mCtx.getFilesDir(), ""), fileName);
-			return writeOutputToFileAndClose(output, internalStorageLocation); 
+			return writeStringOutputToFileAndClose(output, internalStorageLocation); 
 		}
 		return false;
 	}	
-	/*
+	/**
 	 * Write string output to file
 	 * 
 	 * @param output
@@ -133,7 +138,7 @@ public class FileOperations {
 	 * @return boolean
 	 * 			Return true if writing data successful, false otherwise. 
 	 */
-	private boolean writeOutputToFileAndClose(String output, File file){
+	private boolean writeStringOutputToFileAndClose(String output, File file){
 		OutputStreamWriter out = null;
 		try{
 			out = new OutputStreamWriter(new FileOutputStream(file));
@@ -145,51 +150,75 @@ public class FileOperations {
 		}
 		return true; 
 	}
-	/*
-	 * Open file as string from internal/external storage.  
+	/**
+	 * Given an InputStream return it as a string
 	 * 
-	 * @param  location
-	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
-	 *  			to indicate root of file location.
-	 * @param  fileName
-	 * 				The file name including any parent directory structure 
-	 * 				information that will all be relative to the storage 'location' 
-	 * 				directory. 
-	 * @return boolean
-	 * 				Returns file contents as string.
+	 * @param inputStream 
+	 * 				inputStream to read as string
+	 * @return
+	 * 				string
 	 * @throws IOException
-	 * 				Throws IOException if file not able to be opned. 
 	 */
-	public String openFileFromLocation(int location, String fileName) throws IOException{ 
-		fileName = checkLeadingForwardSlash(fileName);
-		File file = null;  
-		if(location == EXTERNAL_STORAGE){
-			if(!externalStorageAvailable()){
-				throw new IOException("sdcard not readable, cannot open file");
-			}
-			//TODO: think about how you want to handle possible nullpointerexception from null fileName
-			file = new File(Environment.getExternalStorageDirectory(), fileName);
-		}else if(location == INTERANL_STORAGE){
-			file = new File(new File(mCtx.getFilesDir(), ""), fileName);
-		}
-		if(!file.exists()){
-			throw new IOException("File not found on sdcard"); 
-		}
-		BufferedReader reader = null;
-		StringBuilder builder = new StringBuilder();
+	public String inputStreamToString(InputStream inputStream) throws IOException{
+		StringBuilder stringBuilder = new StringBuilder();
 		try{
-			reader = new BufferedReader(new FileReader(file));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream) );
 			String line; 
-			while((line = reader.readLine()) != null){
-				builder.append(line); 
+			while( (line = reader.readLine()) != null ){
+				stringBuilder.append(line);
 			}
 		}catch(IOException e){
 			throw new IOException("Problem reading file input.");
 		}
 		
-		return builder.toString();
+		return stringBuilder.toString();  
 	}
-
+	/**
+	 * Open and return the file contents from storage location as an InputStream 
+	 * for user to do with as needed. 
+	 * 
+	 * @param  location
+	 *  			Use FileOperations.INTERNAL_STORAGE or FileOperations.EXTERNAL_STORAGE
+	 *  			or FileOperations.ASSETS_STORAGE to indicate root of file location.
+	 * @param  fileName
+	 * 				The file name including any parent directory structure 
+	 * 				information that will all be relative to the storage 'location' 
+	 * 				directory.
+	 * @return
+	 * 				inputStream of file from storage location.
+	 */
+	public InputStream getInputStreamFromStorageLocation(int location, String fileName){
+		InputStream inputStream = null; 
+		if(location == EXTERNAL_STORAGE){
+			if(!externalStorageAvailable()){
+				//TODO: talk with others, do we want to throw an exception or something else?
+				//throw new IOException("sdcard not readable, cannot open file");
+			}
+			//TODO: think about how you want to handle possible nullpointerexception from null fileName
+			try {
+				inputStream = new FileInputStream(Environment.getExternalStorageDirectory() +"/"+ fileName);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else if(location == INTERANL_STORAGE){
+			String path = mCtx.getFilesDir().getPath() + "/"+ fileName; 
+			try {
+				inputStream = new FileInputStream(path);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else if(location == ASSETS_STORAGE){
+			try {
+				inputStream = assets.open(fileName);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return inputStream;
+	}
 	/*
 	 * Delete file or delete directory recursively. Similar to the 
 	 * command line 'rm -rf <file or dir>' Note that this is a static method.
@@ -208,7 +237,6 @@ public class FileOperations {
 		}
 		return fileOrDirectory.delete();
 	}
-	
 	/*
 	 * Encryption code adapted from FUNF. 
 	 * https://code.google.com/p/funf-open-sensing-framework
