@@ -51,7 +51,7 @@ import java.util.ArrayList;
  *			}
  *    	};
  *		LocalBroadcastManager.getInstance(mCtx).registerReceiver(mSpeechReceiver,
- *				new IntentFilter(mSpeech.getAtctionName()));
+ *				new IntentFilter(mSpeech.getActionName()));
  *		//stopping and closing up shop
  *    	mSpeech.stopSpeechListener();
  *    	LocalBroadcastManager.getInstance(this.mCtx).unregisterReceiver(mSpeechReceiver);

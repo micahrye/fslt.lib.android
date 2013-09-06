@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
@@ -34,11 +36,11 @@ public class FileOperations {
 	public static final int ASSETS_STORAGE = 3; 
 	
 	private Context mCtx; 
-	public static AssetManager assets;
+	public static AssetManager assetManager;
 	
 	public FileOperations(Context context){
 		mCtx = context;
-		assets = mCtx.getAssets();
+		assetManager = mCtx.getAssets();
 	}
 	/**
 	 * Make directory and directory parent path if it does not exist 
@@ -196,13 +198,14 @@ public class FileOperations {
 			}
 			//TODO: think about how you want to handle possible nullpointerexception from null fileName
 			try {
-				inputStream = new FileInputStream(Environment.getExternalStorageDirectory() +"/"+ fileName);
+				inputStream = new FileInputStream(Environment.getExternalStorageDirectory() 
+							+ File.separator + fileName);
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}else if(location == INTERANL_STORAGE){
-			String path = mCtx.getFilesDir().getPath() + "/"+ fileName; 
+			String path = mCtx.getFilesDir().getPath() + File.separator  + fileName; 
 			try {
 				inputStream = new FileInputStream(path);
 			} catch (FileNotFoundException e) {
@@ -211,7 +214,7 @@ public class FileOperations {
 			}
 		}else if(location == ASSETS_STORAGE){
 			try {
-				inputStream = assets.open(fileName);
+				inputStream = assetManager.open(fileName);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -236,6 +239,42 @@ public class FileOperations {
 			}
 		}
 		return fileOrDirectory.delete();
+	}
+	/**
+	 * 
+	 * @param location
+	 * @param dirName
+	 * @return
+	 */
+	public String[] listStorageLocationFiles(int location, String dirName){		
+		String fileNames[] = null; 
+		File fileDir = null;
+		if(location == EXTERNAL_STORAGE){
+			if(!externalStorageAvailable()){
+				//TODO: talk with others, do we want to throw an exception or something else?
+				//throw new IOException("sdcard not readable, cannot open file");
+			}
+			fileDir = new File(Environment.getExternalStorageDirectory() 
+						+ File.separator + dirName);		}
+		else if(location == INTERANL_STORAGE){
+			String path = mCtx.getFilesDir().getPath() + File.separator + dirName;
+			fileDir = new File(path);
+		}else if(location == ASSETS_STORAGE){
+			try {
+				fileNames = assetManager.list(dirName);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if( fileDir != null ){
+			List<String> list = new ArrayList<String>();
+			for (File child : fileDir.listFiles()) {
+				list.add(child.getName());
+			}
+			fileNames =  list.toArray(new String[list.size()]);
+		}
+		return fileNames;
 	}
 	/*
 	 * Encryption code adapted from FUNF. 
