@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import fslt.lib.views.ImageMediaView;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -16,6 +17,9 @@ import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 
 /*
@@ -44,6 +48,7 @@ public class AnimationManager {
     public static final int FADE_IN_OUT_ACTION = 113;
     public static final int HORIZONTAL_SHAKE = 114;
     public static final int VERTICAL_SHAKE = 115;
+    public static final int FLIP_HORIZONTAL = 117;
     
     public static final int GOTO_ACTION = 200; 
     
@@ -54,6 +59,10 @@ public class AnimationManager {
     
     public static final int NO_ANIMATION = 0;
 
+    private String mActionName = "fslt.lib.animation";
+    public static final String ANIMATION_STATUS = "animation_status"; 
+    public static final int ANIMAITON_COMPLETED = 1; 
+    
     private int mScreenWidth; 
     private int mScreenHeight; 
 
@@ -115,6 +124,9 @@ public class AnimationManager {
             	//TODO: remove this, it is just a jump ... 
                 this.jumpAction(view, initY, -1*mSmallHop);
                 break;
+            case AnimationManager.FLIP_HORIZONTAL:
+            	this.flipIt(view);
+            	break; 
             case AnimationManager.SLIDE_RIGHT_AND_RETURN_ACTION:		//101 ok
                 this.horizontalSlideAndReturnAction(view, initX, mBigHop);
                 break;
@@ -234,6 +246,26 @@ public class AnimationManager {
         animation.start();
     }
 
+    private Interpolator accelerator = new AccelerateInterpolator();
+    private Interpolator decelerator = new DecelerateInterpolator();
+    
+	public void flipIt(View view){
+		ObjectAnimator visToInvis = ObjectAnimator.ofFloat(view, "rotationY", 0f, 90f);
+        visToInvis.setDuration(500);
+        visToInvis.setInterpolator(accelerator);
+        final ObjectAnimator invisToVis = ObjectAnimator.ofFloat(view, "rotationY",
+                -90f, 0f);
+        invisToVis.setDuration(500);
+        invisToVis.setInterpolator(decelerator);
+        visToInvis.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator anim) {
+            	invisToVis.addListener(animatorListener);
+                invisToVis.start();
+            }
+        });
+        visToInvis.start();
+	}
 
     public void expandAction(View v){
         AnimatorSet as = new AnimatorSet();
@@ -442,8 +474,8 @@ public class AnimationManager {
 		public void onAnimationRepeat(Animator animation) {
             // TODO Auto-generated method stub
 
-        }
-
+        } 
+        
         @Override
 		public void onAnimationEnd(Animator animation) {
             Object obj = getTargetObjectFromAnimation(animation); 
@@ -453,6 +485,11 @@ public class AnimationManager {
             }else if(obj == null){
                 Log.d(TAG, "Problem with animaiton, getTargetObjectFromAnimation returned null"); 
             }
+            //send message that animation done. 
+            Intent intent = new Intent();
+			intent.putExtra(ANIMATION_STATUS, ANIMAITON_COMPLETED);
+			intent.setAction(mActionName);
+			LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
         }
 
         @Override
@@ -486,6 +523,9 @@ public class AnimationManager {
          
     }
 
+    public String getActionName(){
+    	return mActionName; 
+    }
     public void clearOfObjects(){
         imageMedias.clear();
     }
