@@ -3,7 +3,7 @@
  *  
  * 
  */
-package fslt.lib.utilities;
+package fslt.lib.nfc;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
