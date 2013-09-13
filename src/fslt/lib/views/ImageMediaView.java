@@ -23,6 +23,7 @@ public class ImageMediaView extends ImageView {
 	public float scaleFactorX = 1.0f; 
 	public float scaleFactorY = 1.0f; 
 	public AnimationManager animator = null;
+	public int animationDuration = 500; //in milliseconds
 	public boolean isAnimated = false;
 	private boolean mIsDraggable = false;
 	private boolean mBeingDragged = false;
@@ -109,7 +110,7 @@ public class ImageMediaView extends ImageView {
 					this.isAnimated = true;
 				}
 				this.animator.glide(this, this.getX(), this.getY(), 
-						initX, initY);
+						initX, initY, 500);
 			}
 			break; 
 		}
@@ -142,6 +143,7 @@ public class ImageMediaView extends ImageView {
 				Math.round(this.getY()),
 				this.getAlpha(),
 				this.scaleFactorX,
-				this.scaleFactorY);
+				this.scaleFactorY, this.animationDuration);
+		//NOTE: changes to 
 	}
 }// End ImageMedia
