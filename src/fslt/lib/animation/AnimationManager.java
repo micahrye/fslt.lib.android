@@ -24,14 +24,21 @@ import android.view.animation.Interpolator;
 
 /*
  * AnimationManager class defines simple animations that can be assigned and activated 
- * on views. Typically the views will be ImageMedia or TextMedia objects that are part 
- * of the story page. Animations build off of Android's animation api. 
+ * on views. Note that while AnimationManager can be used to pass a view to have animate, 
+ * it can also hold list of views that should be animated on a fslt.lib.action. In this 
+ * case when an action is received it will animate all views that are suppose to respond. 
+ * <p>
+ * Example of usage: 
+ * <pre>
+ * {@code
+ * 
+ * }
+ * </pre>
  */
 public class AnimationManager {
     public static final String TAG = AnimationManager.class.getSimpleName(); 
 
-    // ActionType enums
-    public static final int BOUNCE_BACK_ACTION_REMOVE = 100; 
+    // animation codes
     public static final int SLIDE_RIGHT_AND_RETURN_ACTION = 101; 
     public static final int SLIDE_LEFT_AND_RETURN_ACTION = 116; 
     public static final int EXPAND_ACTION = 102;
@@ -48,8 +55,7 @@ public class AnimationManager {
     public static final int FADE_IN_OUT_ACTION = 113;
     public static final int HORIZONTAL_SHAKE = 114;
     public static final int VERTICAL_SHAKE = 115;
-    public static final int FLIP_HORIZONTAL = 117;
-    
+    public static final int FLIP_HORIZONTAL = 117; 
     public static final int GOTO_ACTION = 200; 
     
     public static final int IOIO_PIN_01_OUT_ACTION = 301; 
@@ -58,7 +64,7 @@ public class AnimationManager {
     public static final int NFC_APPEAR_DRAG = 400;
     
     public static final int NO_ANIMATION = 0;
-
+    // action name to filter on for broadcast receivers 
     private String mActionName = "fslt.lib.animation";
     public static final String ANIMATION_STATUS = "animation_status"; 
     public static final int ANIMAITON_COMPLETED = 1; 
@@ -66,21 +72,22 @@ public class AnimationManager {
     private int mScreenWidth; 
     private int mScreenHeight; 
 
-    // Convenient Distances
+    // Convenient Distances defined from screen size 
     private int mTinyHop;
     private int mSmallHop; 
     private int mBigHop; 
 
     //Repeat values
-    private static int ONCE = 1;
-    private static int SOME = 4;
-    private static int LOTS = 8;
-
-    private static int FAST = 100;
-    private static int QUICK = 400;
-    private static int NORMAL = 1000;
-    private static int SLOW = 2000;
-    private static int REALLY_SLOW = 4000;
+    private static final int ONCE = 1;
+    private static final int SOME = 4;
+    private static final int LOTS = 8;
+    
+    // default times used for animations 
+    private static final int FAST = 100;
+    private static final int QUICK = 400;
+    private static final int NORMAL = 1000;
+    private static final int SLOW = 2000;
+    private static final int REALLY_SLOW = 4000;
 
     // Animation positions
     private int initX = 0;
@@ -99,11 +106,32 @@ public class AnimationManager {
     public AnimationManager(Context ctx){
     	mCtx = ctx; 
     }
-    /** Animates an object like an image, allowing all possible animations.
+    /**
+     * animateImage is primary public method used for animating a view
+     * 
+     * @param view
+     * 				view to animate 
+     * @param animationCode
+     * 				animation code 
+     * @param initX
+     * 				starting x value of view 
+     * @param initY
+     * 				starting y value of view 
+     * @param initAlpha
+     * 				starting alpha value of view 
+     * @param scaleX
+     * 				starting x scale of view
+     * @param scaleY
+     * 				starting y scale of view
+     * @param duration
+     * 				time in milliseconds of animation, note that for animation with 
+     * 				several steps or a chain of animation duration may be the time for 
+     * 				each step. 
+     * @return
      */
-    public boolean animateImage(View view, int actionType,
+    public boolean animateImage(View view, int animationCode,
             int initX, int initY, float initAlpha,
-            float scaleX, float scaleY){
+            float scaleX, float scaleY, int duration){
         //Every new animation 
         if (getIsAnimated(view)){
             return false;
@@ -117,71 +145,65 @@ public class AnimationManager {
         this.initAlpha = initAlpha; 
         final Intent intent;
         
-        switch(actionType){
-            // Allow all possible animations for images.
-            case AnimationManager.BOUNCE_BACK_ACTION_REMOVE:
-                //this.bounceBackAction(view, initY);
-            	//TODO: remove this, it is just a jump ... 
-                this.jumpAction(view, initY, -1*mSmallHop);
-                break;
+        switch(animationCode){
+            // Possible animations for views
             case AnimationManager.FLIP_HORIZONTAL:
-            	this.flipIt(view);
+            	this.flipIt(view, duration);
             	break; 
             case AnimationManager.SLIDE_RIGHT_AND_RETURN_ACTION:		//101 ok
-                this.horizontalSlideAndReturnAction(view, initX, mBigHop);
+                this.horizontalSlideAndReturnAction(view, initX, mBigHop, duration);
                 break;
             case AnimationManager.SLIDE_LEFT_AND_RETURN_ACTION:
-            	this.horizontalSlideAndReturnAction(view, initX, (-1*mBigHop) );
+            	this.horizontalSlideAndReturnAction(view, initX, (-1*mBigHop), duration );
             	break;
             case AnimationManager.EXPAND_ACTION: 		    //102 ok
-                this.expandAction(view); 
+                this.expandAction(view, duration); 
                 break; 
             case AnimationManager.SHRINK_ACTION: 		    //103 ok
-                this.shrinkAction(view); 
+                this.shrinkAction(view, duration); 
                 break; 
             case AnimationManager.EXPAND_SHRINK_ACTION:	    //104 ok
-                this.expandShrinkAction(view); 
+                this.expandShrinkAction(view, duration); 
                 break; 
             case AnimationManager.FADE_ACTION: 		        //105 ok
-                this.fadeAction(view, initAlpha); 
+                this.fadeAction(view, initAlpha, duration); 
                 break; 
             case AnimationManager.VERTICAL_SQUASH_ACTION:	    //106 very cute, but doesn't come back...?
-                this.verticalSquishyAction(view, initY, scaleX, scaleY);
+                this.verticalSquishyAction(view, initY, scaleX, scaleY, duration);
                 break;
             case AnimationManager.JUMP_ACTION: 		//107 confused
             	//TODO: make mSmallHop parameter from xml for size and direction of jump
             	// negative value means jump up
-                this.jumpAction(view, initY, -1*mSmallHop); 
+                this.jumpAction(view, initY, -1*mSmallHop, duration); 
                 break; 
             case AnimationManager.FADE_OUT_ACTION: 	       	    //108 ok, for toolbar icons
-                this.fadeOutAction(view);
+                this.fadeOutAction(view, duration);
                 break; 
             case AnimationManager.FADE_IN_ACTION:  				//109 ok, for toolbar icons
-            	this.fadeInAction(view);
+            	this.fadeInAction(view, duration);
                 break; 
             case AnimationManager.DRAG_ACTION : 		        //110 Nothing should happen
                 setIsAnimated(view, false);
                 break;
             case AnimationManager.NFC_APPEAR_DRAG:
             	view.setVisibility(View.VISIBLE);
-            	setIsAnimated(view, false);
-            	
+            	setIsAnimated(view, false);  	
             	break;
             case AnimationManager.DRAG_GLIDE_BACK_ACTION: 		//111 This is handled earlier on.
             	// this is handled in ImageMedia 
                 break; 
             case AnimationManager.SPIN_ACTION:				//112 ok
             	//postive is clockwise, negative counter clockwise
-                this.spinAction(view, 360f);
+                this.spinAction(view, 360f, duration);
                 break;
             case AnimationManager.FADE_IN_OUT_ACTION:		//113 ok
-                this.fadeInOutAction(view);
+                this.fadeInOutAction(view, duration);
                 break;
             case AnimationManager.HORIZONTAL_SHAKE:			//114 ok
-                this.vibrateAction(view, "x", initX);
+                this.vibrateAction(view, "x", initX, duration);
                 break;
             case AnimationManager.VERTICAL_SHAKE:			//115 ok
-                this.vibrateAction(view, "y", initY);
+                this.vibrateAction(view, "y", initY, duration);
                 break;
             case AnimationManager.IOIO_PIN_01_OUT_ACTION:			//115 ok
             	intent = new Intent(); 
@@ -208,8 +230,6 @@ public class AnimationManager {
    			 	
                 break;
             default:
-                // Let the default behavior be a slight tremble
-                this.defaultAction(view);
                 break;
         }
         return true;
@@ -222,7 +242,6 @@ public class AnimationManager {
         mTinyHop = (width + height) / 64; 
         mSmallHop = (width + height) / 8;
         mBigHop = (width + height) / 4;
-
     }
 
     //Animation actions
@@ -235,27 +254,31 @@ public class AnimationManager {
         animation.addListener(animatorListener);
         animation.start();
     }
-
-    public void horizontalSlideAndReturnAction(View v, int start, int slideDistance){
+    
+    public void horizontalSlideAndReturnAction(View v, int start, int slideDistance, int duration){
         //TODO
         ObjectAnimator animation = ObjectAnimator.ofFloat(v, "x", start, start + slideDistance);
         animation.setRepeatMode(ValueAnimator.REVERSE);
         animation.setRepeatCount(ONCE);
-        animation.setDuration(SLOW);
+        animation.setDuration(duration);
         animation.addListener(animatorListener);
         animation.start();
     }
 
+    // Vars used by flipIt
     private Interpolator accelerator = new AccelerateInterpolator();
     private Interpolator decelerator = new DecelerateInterpolator();
     
-	public void flipIt(View view){
+    /**
+     * Flips the view around the horizontal axis. 
+     */
+	public void flipIt(View view, int duration){
 		ObjectAnimator visToInvis = ObjectAnimator.ofFloat(view, "rotationY", 0f, 90f);
         visToInvis.setDuration(500);
         visToInvis.setInterpolator(accelerator);
         final ObjectAnimator invisToVis = ObjectAnimator.ofFloat(view, "rotationY",
                 -90f, 0f);
-        invisToVis.setDuration(500);
+        invisToVis.setDuration(duration);
         invisToVis.setInterpolator(decelerator);
         visToInvis.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -267,29 +290,29 @@ public class AnimationManager {
         visToInvis.start();
 	}
 
-    public void expandAction(View v){
+    public void expandAction(View v, int duration){
         AnimatorSet as = new AnimatorSet();
-        expand(v, as);
+        expand(v, as, duration);
         as.addListener(animatorListener);
         as.start();
     }
-    public void shrinkAction(View v){
+    public void shrinkAction(View v, int duration){
         AnimatorSet as = new AnimatorSet();
-        shrink(v, as);
+        shrink(v, as, duration);
         as.addListener(animatorListener);
         as.start();
     }
-    public void expandShrinkAction(View v){
+    public void expandShrinkAction(View v, int duration){
         AnimatorSet as = new AnimatorSet();
-        expand(v, as);
+        expand(v, as, duration);
         AnimatorSet as2 = new AnimatorSet();
         as2.setStartDelay(REALLY_SLOW);
-        shrink(v, as2);
+        shrink(v, as2, duration);
         as.start();
         as2.addListener(animatorListener);
         as2.start();
     }
-    public void fadeAction(View v, float startAlpha){
+    public void fadeAction(View v, float startAlpha, int duration){
     	ObjectAnimator animation; 
     	//0.06 instead of 0.05 because of rounding 
     	if(startAlpha > 0.06f)
@@ -302,7 +325,8 @@ public class AnimationManager {
     }
 
 
-    public void verticalSquishyAction(View v, int startY, float scaleX, float scaleY){
+    public void verticalSquishyAction(View v, int startY, float scaleX, 
+    				float scaleY, int duration){
         int id = v.getId(); 
         Log.i("TAG", Integer.toString(id));
         ObjectAnimator moveAnimation; 
@@ -312,7 +336,7 @@ public class AnimationManager {
         animatorSet.addListener(animatorListener); 
         
         squashAnimation =  ObjectAnimator.ofFloat(v, "scaleY", 0.5f);
-        squashAnimation.setDuration(QUICK);
+        squashAnimation.setDuration(duration);
         squashAnimation.setRepeatCount(ONCE);
         squashAnimation.setRepeatMode(ValueAnimator.REVERSE);
         animatorSet.play(squashAnimation);
@@ -324,7 +348,7 @@ public class AnimationManager {
      * TODO (joyc): ASK_MICAH, what is this?
      *
      */
-    public void jumpAction(View v, int startY, int jumpSize){
+    public void jumpAction(View v, int startY, int jumpSize, int duration){
         int id = v.getId(); 
         Log.i("TAG", Integer.toString(id));
         
@@ -332,35 +356,18 @@ public class AnimationManager {
         animation.setRepeatMode(ValueAnimator.REVERSE);
         animation.setRepeatCount(ONCE);
         animation.setDuration(QUICK);
-        animation.addListener(animatorListener);
+        animation.addListener(animatorListener); 
         animation.start();
     }
 
-    /** Currently does a very fast tremble just once, to indicate that its been tapped.
-     */
-
-    public void defaultAction(View v)
-	{
-		/* Better to have default be nothing. IMPORTANT
-		 * the SHAKE seams to have a bug in it, since the image does
-		 * not reset to original 
-		float startX = v.getX();
-		ObjectAnimator shake = ObjectAnimator.ofFloat(v, "x", startX, startX + mTinyHop);
-		shake.setRepeatMode(ValueAnimator.REVERSE);
-		shake.setDuration(FAST);
-		shake.setRepeatCount(LOTS);
-        shake.start();
-        */
-	}
-
-    public void spinAction(View v, float degrees){
+    public void spinAction(View v, float degrees, int duration){
         ObjectAnimator animation = ObjectAnimator.ofFloat(v,  "rotation", 0f, degrees);
         animation.setDuration(SLOW);
         animation.addListener(animatorListener); 
         animation.start();
     }
 
-    public void fadeInOutAction(View v){
+    public void fadeInOutAction(View v, int duration){
         ObjectAnimator animation = ObjectAnimator.ofFloat(v,  "alpha", 1.0f, 0.1f);
         animation.setRepeatMode(ValueAnimator.REVERSE);
         animation.setRepeatCount(ONCE);
@@ -369,7 +376,7 @@ public class AnimationManager {
         animation.start();
     }
 
-    public void fadeInAction(View v){
+    public void fadeInAction(View v, int duration){
         ObjectAnimator animation = ObjectAnimator.ofFloat(v,  "alpha", 0.25f, 1.0f);
         animation.setDuration(QUICK);
         animation.addListener(animatorListener); 
@@ -377,24 +384,32 @@ public class AnimationManager {
     }
     
 
-    public void fadeOutAction(View v){
+    public void fadeOutAction(View v, int duration){
         ObjectAnimator animation = ObjectAnimator.ofFloat(v,  "alpha", 1.0f, 0.25f);
         animation.setDuration(QUICK);
         animation.addListener(animatorListener); 
         animation.start();
     }
-
-    public void vibrateAction(View v, String direction, int startCoordinate)
+    /**
+     * TODO: needs to be tested to see what duration value works best. 
+     * @param v
+     * @param direction
+     * @param startCoordinate
+     * @param vibrateAction
+     * @param duration
+     */
+    public void vibrateAction(View v, String direction, int startCoordinate, int duration)
     {
+    	//TODO: probably should get rid of mTinyHop. 
     	int speed = 2*mTinyHop; 
         AnimatorSet shake1 = new AnimatorSet();
         AnimatorSet shake2 = new AnimatorSet();
         AnimatorSet shake3 = new AnimatorSet();
-        shake(v, shake1, direction, speed, startCoordinate, startCoordinate + mTinyHop);
-        shake(v, shake2, direction, speed, startCoordinate, startCoordinate - mTinyHop);
-        shake(v, shake3, direction, speed, startCoordinate, startCoordinate + mTinyHop);
-        shake2.setStartDelay(speed*2);
-        shake3.setStartDelay(speed*4);
+        shake(v, shake1, direction, startCoordinate, startCoordinate + mTinyHop, duration);
+        shake(v, shake2, direction, startCoordinate, startCoordinate - mTinyHop, duration);
+        shake(v, shake3, direction, startCoordinate, startCoordinate + mTinyHop, duration);
+        shake2.setStartDelay(duration*2);
+        shake3.setStartDelay(duration*4);
         shake1.start();
         shake2.start();
         
@@ -402,12 +417,13 @@ public class AnimationManager {
         shake3.start(); 
     }
 
-    public void glide(View v, float initX, float initY, float finalX, float finalY)
+    public void glide(View v, float initX, float initY, float finalX, 
+    			float finalY, int duration)
     {
         ObjectAnimator xComponent = ObjectAnimator.ofFloat(v, "x", initX, finalX);
         ObjectAnimator yComponent = ObjectAnimator.ofFloat(v, "y", initY, finalY);
-        xComponent.setDuration(NORMAL);
-        yComponent.setDuration(NORMAL);
+        xComponent.setDuration(duration);
+        yComponent.setDuration(duration);
         AnimatorSet as = new AnimatorSet();
         as.play(xComponent).with(yComponent);
         setIsAnimated(v, true);
@@ -415,34 +431,36 @@ public class AnimationManager {
         as.start();
     }
 
-    private void expand(View v, AnimatorSet as){
+    private void expand(View v, AnimatorSet as, int duration){
         ObjectAnimator animationX = ObjectAnimator.ofFloat(v, "scaleX", 1.0f, 2.0f);
         ObjectAnimator animationY = ObjectAnimator.ofFloat(v, "scaleY", 1.0f, 2.0f);
         animationX.setRepeatMode(ValueAnimator.REVERSE);
         animationY.setRepeatMode(ValueAnimator.REVERSE);
         animationX.setRepeatCount(ONCE);
         animationY.setRepeatCount(ONCE);
-        animationX.setDuration(SLOW);
-        animationY.setDuration(SLOW);
+        animationX.setDuration(duration);
+        animationY.setDuration(duration);
         as.play(animationX).with(animationY);
     }
 
-    private void shrink(View v, AnimatorSet as){
+    private void shrink(View v, AnimatorSet as, int duration){
         ObjectAnimator animationX = ObjectAnimator.ofFloat(v, "scaleX", 1.0f, 0.5f);
         ObjectAnimator animationY = ObjectAnimator.ofFloat(v, "scaleY", 1.0f, 0.5f);
         animationX.setRepeatMode(ValueAnimator.REVERSE);
         animationY.setRepeatMode(ValueAnimator.REVERSE);
         animationX.setRepeatCount(ONCE);
         animationY.setRepeatCount(ONCE);
-        animationX.setDuration(SLOW);
-        animationY.setDuration(SLOW);
+        animationX.setDuration(duration);
+        animationY.setDuration(duration);
         as.play(animationX).with(animationY);
     }
 
-    private void shake(View v, AnimatorSet as, String direction, int speed, int startCoordinate, int endCoordinate){
-        ObjectAnimator shakeObject = ObjectAnimator.ofFloat(v, direction, startCoordinate, endCoordinate);
+    private void shake(View v, AnimatorSet as, String direction, 
+    			int startCoordinate, int endCoordinate, int duration){
+        ObjectAnimator shakeObject = ObjectAnimator.ofFloat(v, direction, 
+        				startCoordinate, endCoordinate);
         shakeObject.setRepeatMode(ValueAnimator.REVERSE);
-        shakeObject.setDuration(speed);
+        shakeObject.setDuration(duration);
         shakeObject.setRepeatCount(ONCE);
         as.play(shakeObject);
     }
@@ -598,7 +616,6 @@ public class AnimationManager {
     public void speechActivate(){
     	LinkedList<ImageMediaView> ims = speechActivatedImages();
     	activateImageObjects(ims);
-
     }
     */
     public void NFCActivate(){
@@ -611,5 +628,4 @@ public class AnimationManager {
     		imgObjects.get(i).activateMe();
         }
     }
-
 }

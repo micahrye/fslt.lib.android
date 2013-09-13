@@ -30,7 +30,8 @@ import java.util.ArrayList;
  * <p>
  * This class's methods must be invoked only from the main application thread. 
  * Please note that the application must have RECORD_AUDIO permission set in the 
- * project AndroidManifest.xml to use this class.
+ * project AndroidManifest.xml to use this class. In your manifest add: 
+ * <uses-permission android:name="android.permission.RECORD_AUDIO"/> 
  * <pre>
  * {@code
  *		// initializing and starting 
@@ -46,10 +47,15 @@ import java.util.ArrayList;
  *    	};
  *		LocalBroadcastManager.getInstance(mCtx).registerReceiver(mSoundLevelReceiver,
  *				new IntentFilter(mSoundLevelDetection.getActionName()));
- *		//stopping and closing up shop
+ *		// Now you can let it run in the background and it will broadcast messages when
+ *		// louder sounds are detected. 
+ *
+ *		//when you want to stop and closing up shop
  *    	mSoundLevelDetection.closeMicrophone();
+ *    	// mSoundLevelDetection.stopSoundLevelDetection();
+ *    	// before you leave the activity/application 
  *    	LocalBroadcastManager.getInstance(this.mCtx).unregisterReceiver(mSoundLevelReceiver);
- *    	mSoundLevelDetection.stopSoundLevelDetection();
+ * 
  * }
  * </pre>
  */
