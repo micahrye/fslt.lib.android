@@ -198,7 +198,7 @@ public class BitmapFileOperations {
 	 * 			Integer value for the devices screenDpi. If value 0 then 
 	 * 			device screen dpi will be ignored. 
 	 */
-	private BitmapFactory.Options getDefaultBitmapOptionsForScreenDpi(boolean atScreenDpi){
+	public BitmapFactory.Options getDefaultBitmapOptionsForScreenDpi(boolean atScreenDpi){
 		BitmapFactory.Options options = new BitmapFactory.Options();
 		if( !atScreenDpi ) return options;  
 		

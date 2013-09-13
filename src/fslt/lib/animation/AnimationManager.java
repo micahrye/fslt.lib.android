@@ -129,10 +129,13 @@ public class AnimationManager {
      * 				each step. 
      * @return
      */
-    public boolean animateImage(View view, int animationCode,
-            int initX, int initY, float initAlpha,
-            float scaleX, float scaleY, int duration){
+    public boolean animateImage(View view, int animationCode, int duration){
         //Every new animation 
+    	int initX = (int)view.getX(); 
+    	int initY = (int)view.getY(); 
+    	float scaleX = view.getScaleX(); 
+    	float scaleY = view.getScaleY(); 
+    	float initAlpha = view.getAlpha(); 
         if (getIsAnimated(view)){
             return false;
         } else {

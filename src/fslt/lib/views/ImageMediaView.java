@@ -137,13 +137,7 @@ public class ImageMediaView extends ImageView {
 	 * @return whether or not an animation happened.
 	 */
 	public boolean activateMe(){
-		return this.animator.animateImage(this,
-				this.action,
-				Math.round(this.getX()),
-				Math.round(this.getY()),
-				this.getAlpha(),
-				this.scaleFactorX,
-				this.scaleFactorY, this.animationDuration);
+		return this.animator.animateImage(this, this.action, this.animationDuration);
 		//NOTE: changes to 
 	}
 }// End ImageMedia
