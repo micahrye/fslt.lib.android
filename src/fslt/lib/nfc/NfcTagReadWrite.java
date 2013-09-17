@@ -7,9 +7,45 @@ import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
+import android.nfc.Tag;
 import android.text.TextUtils;
 
-public class NfcTagReader {
+public class NfcTagReadWrite {
+
+	//NOTE that this should match your intent filter in your manifest file!!! 
+	private String mMimeType = "application/com.fslt.lib.nfc.tag";
+
+	/**
+	 * 
+	 * @param intent
+	 * @param msg
+	 * @return
+	 */
+	public boolean writeStringToNfcTag(Intent intent, String msg) {
+		//make sure we are dealing with an Nfc intent
+		Tag detectedTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+		byte[] payload = new String(msg).getBytes();
+		if (detectedTag != null && NfcUtils.writeTag(
+				NfcUtils.createMessage(mMimeType, payload), detectedTag)) {
+			return true; 
+		} 
+		return false;
+	}
+	/**
+	 * 
+	 * @param type
+	 */
+	public void setMimeType(String type){
+		mMimeType = type; 
+	}
+	/**
+	 * 
+	 * @return
+	 * 			returns string mime type
+	 */
+	public String getMimeType(){
+		return mMimeType; 
+	}
 
 	/**
 	 * 
@@ -22,8 +58,6 @@ public class NfcTagReader {
 	 */
 	public String readTagMessage(Intent intent) {
 		String rtnMsg = ""; 
-		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) return rtnMsg; 
-		
 		List<NdefMessage> intentMessages = NfcUtils.getMessagesFromIntent(intent);
 		List<String> payloadStrings = new ArrayList<String>(intentMessages.size());
 
@@ -41,10 +75,11 @@ public class NfcTagReader {
 				}
 			}
 		}
-		
+
 		if (!payloadStrings.isEmpty()) {
 			rtnMsg =  TextUtils.join(",", payloadStrings);
 		}
 		return rtnMsg;
 	}
+
 }
