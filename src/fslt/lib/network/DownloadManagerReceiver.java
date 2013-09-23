@@ -83,8 +83,6 @@ import android.widget.Toast;
  * </pre> 
  */
 public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
-	//TODO: probably want a way to check if download manager is downloading a file and if so 
-	//don't download it again. check DownloadManager.STATUS_RUNNING | STATUS_PENDING | STATUS_PAUSED
 	private final static String TAG = DownloadManagerReceiver.class.getSimpleName(); 
 	public String mPathInfo = null; 
 	//TODO: since this is a broadcast receiver that  
@@ -114,17 +112,15 @@ public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
                             .getString(c
                                     .getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
                             .substring(7);
-                    //String download_uri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_URI));
-                    //String media_uri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIAPROVIDER_URI));
-                    
-                    //String lf_uri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
-                    // Now, if it's a zip file,  we want to unzip it...
                     Log.e(TAG, "DID" + downloadId + " downloaded " + zipUri);
                     String storyURI = zipUri.replaceAll("-\\d\\.zip\\z", ".zip"); 
-                    //String storyName = "";
                     Pattern pattern = Pattern.compile(".*\\.zip\\z");
                     Matcher matcher = pattern.matcher(storyURI);
-                    //IF we have a zip file contineu 
+                    /*
+                     IF we have a zip file continue. THIS should be changed, need to make this an
+                     abstract class so user can implement whatever they want for when the file 
+                     they downloaded is done. 
+                    */
                     if(matcher.find()){
                     	unpackageZip(ctx, matcher, zipUri); 
                     }
@@ -136,6 +132,7 @@ public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
             }
         }
     }
+	
 	private void unpackageZip(Context ctx, Matcher matcher, String zipUri){
 		String storyName = "";
 		try{
