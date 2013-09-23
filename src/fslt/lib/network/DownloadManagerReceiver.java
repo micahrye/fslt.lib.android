@@ -12,12 +12,15 @@ import fslt.lib.file.UnzipService;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
+import android.app.DownloadManager.Request;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 /* 
  * DownloadManagerReceiver is used in conjunction with the Android native DownloadManager
@@ -31,6 +34,53 @@ import android.util.Log;
             </intent-filter>
         </receiver>
  * </pre>
+ * <p> 
+ * In your code to download you will want to request the download from DownloadManager, and 
+ * you may want to check to see if the file is already in the queue for download. 
+ * <pre>
+ * 	
+ * 			private void someFunction(){			
+ * 				Request request = new Request(Uri.parse(url));
+				request.allowScanningByMediaScanner();
+				request.setNotificationVisibility(
+						DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+				// actuall file name being downloaded
+				String filename = url.substring(url.lastIndexOf("/")+1, url.length());
+
+				//Check if file is currently being downloaded, if so do not download it. 
+				DownloadManager.Query query = new DownloadManager.Query();
+				query.setFilterByStatus(DownloadManager.STATUS_RUNNING | 
+							DownloadManager.STATUS_PENDING | DownloadManager.STATUS_PAUSED);
+				Cursor cursor = mDownloadMngr.query(query);
+				if(cursor.moveToFirst()){
+					int columnTitle = cursor.getColumnIndex(DownloadManager.COLUMN_TITLE);
+					String downloadFileTitle = cursor.getString(columnTitle);
+					boolean same = downloadFileTitle.equalsIgnoreCase(filename); 
+					same = downloadFileTitle.equalsIgnoreCase("omg_bees".toString()); 
+					if(downloadFileTitle.equalsIgnoreCase( filename )){
+						Toast.makeText(mCtx, "Alreading downloading file", 1000).show();
+						return;
+					}else{
+						requestDownload(request, filename);
+						Toast.makeText(mCtx, "Downloading.... :" + filename, Toast.LENGTH_LONG).show();
+					}
+				}else{
+					requestDownload(request, filename);
+					Toast.makeText(mCtx, "Downloading.... :" + filename, Toast.LENGTH_LONG).show();
+				}
+
+			}
+			
+	private void requestDownload(Request request, String filename){
+		
+		request.setDestinationInExternalFilesDir(mCtx, Environment.DIRECTORY_DOWNLOADS, filename);
+		request.setDescription("STORYSCAPE_STORY_DOWNLOAD");
+		request.setTitle(filename);
+		enqueue = mDownloadMngr.enqueue(request);
+		
+	}
+ * </pre> 
  */
 public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
 	//TODO: probably want a way to check if download manager is downloading a file and if so 
