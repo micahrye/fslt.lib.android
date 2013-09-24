@@ -107,6 +107,7 @@ public abstract  class DownloadManagerReceiver extends BroadcastReceiver {
 			same = downloadFileTitle.equalsIgnoreCase("omg_bees".toString()); 
 			if(downloadFileTitle.equalsIgnoreCase( fileName )){
 				Toast.makeText(context, "Alreading downloading file", 1000).show();
+				// -1 means the file is in the download process. 
 				return -1l;
 			}else{
 				return requestDownload(context, request, fileName);

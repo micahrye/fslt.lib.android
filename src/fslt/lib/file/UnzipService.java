@@ -27,7 +27,7 @@ public abstract  class UnzipService extends Service {
 	public final static String UNZIP_FILE_TO_LOCATION = "UNZIP_LOCATION"; 
 	public final static String ZIP_FILE_LOCATOIN = "ZIP_FILE_LOACTION";
 	public final static String SHOW_TOAST = "SHOW_TOAST"; 
-	public final static String DELETE_ZIP_FILE_AFTER_UNZIP = "DELETE_ZIP_FILE_AFTER_DELET"; 
+	public final static String DELETE_ZIP_FILE_AFTER_UNZIP = "DELETE_ZIP_FILE_AFTER_DOWNLOAD"; 
 	private boolean mShowToast; 
 	private boolean mDeleteZipFile; 
 	private Context mContext; 
