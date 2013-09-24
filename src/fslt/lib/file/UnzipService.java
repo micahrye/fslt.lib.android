@@ -95,10 +95,10 @@ public abstract  class UnzipService extends Service {
         @Override
 		protected Boolean doInBackground(String... locations)
         {
-        	// Delete the entire old folder if it existed
-        	FileOperations.deleteRecursive(new File(locations[1])); 
         	String fileToUnzip = locations[0]; 
         	String locationToUnzipFile = locations[1]; 
+        	// Delete the entire old folder if it existed
+        	FileOperations.deleteRecursive(new File(locationToUnzipFile)); 
             //Try to unzip the file
             try{
             	Log.d(TAG, "start to decompress " + fileToUnzip);
@@ -127,5 +127,4 @@ public abstract  class UnzipService extends Service {
         }
     };
 
-    
 }
