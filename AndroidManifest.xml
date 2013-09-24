@@ -21,7 +21,8 @@
     </receiver>
 
     <service
-        android:name="UnzipService"
+        android:name=".UnzipService"
+        android:enabled="true"
         android:process=":fslt.lib.file.utilites.UnzipService"
         >
     </service>
