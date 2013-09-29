@@ -1,5 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">FSLTLib</string>
-
+    <string name="hello">Hello World, StoryScapeActivity!</string>
+    <string name="app_name">StoryScape</string>
+    <string name="splash_desc">StoryScape Splash Icon</string>
+    <string name="tap_image">Choose image</string>
+    <string name="record_sound">Do you want to record a sound for an image?</string>
+    
+    <string name="edit_image">Clean up your picture!</string>
+    <string name="cut">Cut</string>
+    <string name="erase">Erase</string>
+    <string name="edit_done_btn">Done</string>
+    <string name="redo_btn">Redo</string>
+    <string name="undo_btn">Undo</string>
+    
+    
+    <string name="remix">Do you want to remix this story?</string>
+    <string name="add_sound">Add Sound</string>
+    <string name="add_picture">Add Picture</string>
+    <string name="delete_sound">Delete Sound</string>
+    <string name="delete_picture">Delete Picture</string>
+    
+    <string name="remix_image">Do you have your image saved?</string>
+    <string name="gallery">Yes, in gallery</string>
+    <string name="camera">No, take one</string>
 </resources>
