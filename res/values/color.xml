@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<color name="transparent">#00000000</color> 
-<color name="black">#FF000000</color> 
-<color name="androidLightBlue">#33B5E5</color> 
-<color name="androidDarkBlue">#0099CC</color> 
+<color name="flst_transparent">#00000000</color> 
+<color name="flst_black">#FF000000</color> 
+<color name="flst_androidLightBlue">#33B5E5</color> 
+<color name="flst_androidDarkBlue">#0099CC</color> 
 
-<color name="androidLightPurple">#AA66CC</color> 
-<color name="androidDarkPurple">#9933CC</color>
+<color name="flst_androidLightPurple">#AA66CC</color> 
+<color name="flst_androidDarkPurple">#9933CC</color>
  
-<color name="androidLightGreen">#99CC00</color> 
-<color name="androidDarkGreen">#669900</color>
+<color name="flst_androidLightGreen">#99CC00</color> 
+<color name="flst_androidDarkGreen">#669900</color>
  
-<color name="androidLightOrange">#FFBB33</color> 
-<color name="androidDarkOrange">#FF8800</color>
+<color name="flst_androidLightOrange">#FFBB33</color> 
+<color name="flst_androidDarkOrange">#FF8800</color>
 
-<color name="androidLightRed">#FF4444</color> 
-<color name="androidDarkRed">#CC0000</color>
+<color name="flst_androidLightRed">#FF4444</color> 
+<color name="flst_androidDarkRed">#CC0000</color>
  
-<color name="frostedGlass">#a0FFFFFF</color>
-<color name="smokedGlass">#a0CCCCCC</color>
+<color name="flst_frostedGlass">#a0FFFFFF</color>
+<color name="flst_smokedGlass">#a0CCCCCC</color>
 
 </resources>

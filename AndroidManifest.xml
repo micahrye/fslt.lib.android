@@ -12,7 +12,8 @@
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     
-    <application>
+    <application 
+         android:debuggable="true" >
         
     <receiver android:name="DownloadManagerReceiver" >
         <intent-filter>
@@ -26,6 +27,15 @@
         android:process=":fslt.lib.file.utilites.UnzipService"
         >
     </service>
+    
+    <activity
+            android:label="EditImageViewActivity"
+            android:name="fslt.lib.activities.EditImageViewActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
+             >
+     	</activity>
+    
 
     </application>
     

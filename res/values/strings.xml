@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, StoryScapeActivity!</string>
-    <string name="app_name">StoryScape</string>
-    <string name="splash_desc">StoryScape Splash Icon</string>
-    <string name="tap_image">Choose image</string>
-    <string name="record_sound">Do you want to record a sound for an image?</string>
+    <string name="flst_hello">Hello World, StoryScapeActivity!</string>
+    <string name="flst_app_name">FSLTLib</string>
+    <string name="flst_splash_desc">StoryScape Splash Icon</string>
+    <string name="flst_tap_image">Choose image</string>
+    <string name="flst_record_sound">Do you want to record a sound for an image?</string>
     
-    <string name="edit_image">Clean up your picture!</string>
-    <string name="cut">Cut</string>
-    <string name="erase">Erase</string>
-    <string name="edit_done_btn">Done</string>
-    <string name="redo_btn">Redo</string>
-    <string name="undo_btn">Undo</string>
+    <string name="flst_edit_image">Clean up your picture!</string>
+    <string name="flst_cut">Cut</string>
+    <string name="flst_erase">Erase</string>
+    <string name="flst_edit_done_btn">Done</string>
+    <string name="flst_redo_btn">Redo</string>
+    <string name="flst_undo_btn">Undo</string>
     
     
-    <string name="remix">Do you want to remix this story?</string>
-    <string name="add_sound">Add Sound</string>
-    <string name="add_picture">Add Picture</string>
-    <string name="delete_sound">Delete Sound</string>
-    <string name="delete_picture">Delete Picture</string>
+    <string name="flst_remix">Do you want to remix this story?</string>
+    <string name="flst_add_sound">Add Sound</string>
+    <string name="flst_add_picture">Add Picture</string>
+    <string name="flst_delete_sound">Delete Sound</string>
+    <string name="flst_delete_picture">Delete Picture</string>
     
-    <string name="remix_image">Do you have your image saved?</string>
-    <string name="gallery">Yes, in gallery</string>
-    <string name="camera">No, take one</string>
+    <string name="flst_remix_image">Do you have your image saved?</string>
+    <string name="flst_gallery">Yes, in gallery</string>
+    <string name="flst_camera">No, take one</string>
 </resources>

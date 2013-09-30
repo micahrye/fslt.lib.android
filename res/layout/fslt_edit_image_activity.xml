@@ -2,17 +2,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/androidLightBlue"
+    android:background="@color/flst_androidLightBlue"
     android:orientation="horizontal"
     android:weightSum="5" >
 
-    <edu.mit.media.affect.storyscape.remix.EditableImageView
-        android:id="@+id/edit_image"
+    <fslt.lib.views.EditableImageView
+        android:id="@+id/fslt_edit_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentRight="true"
         android:layout_weight="1"
-        android:contentDescription="@string/edit_image"
+        android:contentDescription="@string/flst_edit_image"
         android:scaleType="centerCrop" />
 
     <LinearLayout
@@ -20,7 +20,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
         android:layout_weight="4"
-        android:background="@color/smokedGlass"
+        android:background="@color/flst_smokedGlass"
         android:gravity="left"
         android:orientation="vertical" >
 
@@ -28,17 +28,17 @@
             android:id="@+id/undo_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/undo_btn"
-            android:text="@string/undo_btn"
-            android:textColor="@color/black" />
+            android:contentDescription="@string/flst_undo_btn"
+            android:text="@string/flst_undo_btn"
+            android:textColor="@color/flst_black" />
 
         <Button
             android:id="@+id/redo_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/redo_btn"
-            android:text="@string/redo_btn" 
-            android:textColor="@color/black"/>
+            android:contentDescription="@string/flst_redo_btn"
+            android:text="@string/flst_redo_btn" 
+            android:textColor="@color/flst_black"/>
 
         <RadioGroup
             android:layout_width="wrap_content"
@@ -49,24 +49,24 @@
                 android:id="@+id/radio_cut"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/cut" 
-                android:textColor="@color/black"/>
+                android:text="@string/flst_cut" 
+                android:textColor="@color/flst_black"/>
 
             <RadioButton
                 android:id="@+id/radio_erase"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/erase" 
-                android:textColor="@color/black"/>
+                android:text="@string/flst_erase" 
+                android:textColor="@color/flst_black"/>
         </RadioGroup>
 
         <Button
             android:id="@+id/edit_done_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/edit_done_btn"
-            android:text="@string/edit_done_btn" 
-            android:textColor="@color/black"/>
+            android:contentDescription="@string/flst_edit_done_btn"
+            android:text="@string/flst_edit_done_btn" 
+            android:textColor="@color/flst_black"/>
     </LinearLayout>
 
 </RelativeLayout>
