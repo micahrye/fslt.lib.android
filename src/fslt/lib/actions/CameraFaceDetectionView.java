@@ -25,7 +25,7 @@ import android.view.SurfaceView;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-/*
+/**
  * FaceDetection allows for fast detection of faces from video preview. When
  * a face(s) is detected LocalBroadcastManager sends a broadcast out to any 
  * receivers, the default action name to filter on is  
