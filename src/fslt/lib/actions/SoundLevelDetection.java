@@ -61,8 +61,8 @@ public class SoundLevelDetection {
 	private Context mCtx;
 	private MediaRecorder mRecorder = null;
 	private boolean mRecorderStarted = false; 
-    private final CheckAmbientNoiseTask mAmbientNoiseTask; 
-    private final SoundLevelTask mSoundLevelTask;
+    private CheckAmbientNoiseTask mAmbientNoiseTask;
+    private SoundLevelTask mSoundLevelTask;
 
 	//string that is used for local broadcasting, set IntentFilter to this filter for this name. 
 	private final String mActionName;
@@ -113,7 +113,7 @@ public class SoundLevelDetection {
 	public SoundLevelDetection(Context context,String actionName,
 			int ambientDuration, int pollInterval,
 			Double noiseThreshold, Double soundLevelThreshold){
-		mCtx = context; 
+		mCtx = context;
 		mAmbientNoiseTask = new CheckAmbientNoiseTask();
 	    mSoundLevelTask = new SoundLevelTask();
 
@@ -200,6 +200,8 @@ public class SoundLevelDetection {
 		openMicrophone();
 		if( mRecorderStarted ) {
 			//Allow for concurrent running of tasks
+			mAmbientNoiseTask = new CheckAmbientNoiseTask();
+		    mSoundLevelTask = new SoundLevelTask();
 			mAmbientNoiseTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		    mSoundLevelTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
