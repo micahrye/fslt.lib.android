@@ -16,10 +16,10 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/*
+/**
  * SoundLevelDetection is meant to be used for detection of sound events, which 
  * are then broadcast to anyone that is interested in receiving such information. 
- * If ambient noise is to great sound events cannot be detected. Ambient noise 
+ * If ambient noise is too great sound events cannot be detected. Ambient noise 
  * threshold and sound event threshold can be set by users (threshold in decibles).
  * Note that SoundLevelDetection uses a LocalBroadcastManager for sending broadcast. 
  * <p>
@@ -70,11 +70,11 @@ public class SoundLevelDetection {
 	public static boolean NOISY_ENVIRONMENT = true; 
 	private int mCheckForAmbientNoiseDuration = 500; 
 	private int mPollForSound  = 100;
-    private Double mSoundThreshold = (double) 87; //85;
+    private Double mSoundThreshold = (double) 87;
     private Double mAmbientNoiseThreshold = (double) 65;
     private CheckAmbientNoiseTask mAmbientNoiseTask; 
     private SoundLevelTask mSoundLevelTask;
-	
+
     /**
      * Constructor, note that the default action is 
      * "fslt.lib.action.soundleveldetection" This is the name that you would 
@@ -99,15 +99,17 @@ public class SoundLevelDetection {
 	 * @param actionName 
 	 * 				A String value representing the name of the sound action. 
 	 */
-	private void setActionName(String actionName){
+	public void setActionName(String actionName){
 		mActionName = actionName; 
 	}
+
 	/**
 	 * @return action name
 	 */
 	public String getActionName(){
 		return mActionName; 
 	}
+
 	/**
 	 * The amount of time, in milliseconds, to check the ambient noise level. 
 	 * If there is to much ambient noise we cannot detect other sounds.  
@@ -126,6 +128,7 @@ public class SoundLevelDetection {
 			mCheckForAmbientNoiseDuration = duration; 
 		}
 	}
+
 	/**
 	 * @return poll interval used for polling for background nose. 
 	 * 		Recall if there is to much background noise we can not detect a 
@@ -134,6 +137,7 @@ public class SoundLevelDetection {
 	public int getCheckForAmbientNoiseDuratio(){
 		return mCheckForAmbientNoiseDuration; 
 	}
+
 	/**
 	 * 
 	 * @param interval time interval in milliseconds to poll for sound 
@@ -141,6 +145,7 @@ public class SoundLevelDetection {
 	public void setSoundPollInterval(int interval){
 		mPollForSound = interval; 
 	}
+
 	/**
 	 * 
 	 * @return poll interval in milliseconds for polling for sound
@@ -148,7 +153,8 @@ public class SoundLevelDetection {
 	public int getSoundPollInterval(){
 		return mPollForSound;
 	}
-	/*
+
+	/**
 	 * Set ambient noise threshold, value used to determine if 
 	 * 
 	 * @param noiseThreshold
@@ -160,12 +166,14 @@ public class SoundLevelDetection {
 	public void setAmbientNoiseThreshold(Double noiseThreshold){
 		mAmbientNoiseThreshold = noiseThreshold; 
 	}
-	/*$
+
+	/**
 	 * @return ambient nose threshold as double, represents a decibel value
 	 */
 	public Double getAmbientNoiseThreshold(){
 		return mAmbientNoiseThreshold; 
 	}
+
 	/**
 	 * Set sound level threshold, value used to determine if a sound event 
 	 * has taken place. 
@@ -179,12 +187,14 @@ public class SoundLevelDetection {
 	public void setSoundLevelThreshold(Double soundLevleThreshold){
 		mSoundThreshold = soundLevleThreshold; 
 	}
+
 	/**
 	 * Return sound level threshold, double value represents decibels 
 	 */
 	public Double getSoundSoundLevelThreshold(){
 		return mSoundThreshold; 
 	}
+
 	/**
 	 * Open microphone from a MediaRecorder object. Method initializes and
 	 * starts a MediaRecorder object with the audio source set to the devices
@@ -192,6 +202,7 @@ public class SoundLevelDetection {
 	 * 
 	 * @returns boolean value, true if microphone set up, false otherwise. 
 	 */
+
 	public boolean openMicrophone() {
 		if (mRecorder == null) {
 			mRecorder = new MediaRecorder();
@@ -217,6 +228,7 @@ public class SoundLevelDetection {
 		}
 		return mRecorderStarted;
 	}
+
 	/**
 	 * Close microphone opened by {@openMicrophone}.  
 	 */
@@ -233,6 +245,7 @@ public class SoundLevelDetection {
 			e.printStackTrace();
 		}
 	}
+
 	/**
 	 * Starts the threads used for detecting if a sound event has happened and if a
 	 * sound action should be broadcast. Note that this threads run continuously until 
@@ -250,6 +263,7 @@ public class SoundLevelDetection {
 		    mSoundLevelTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 	}
+
 	/**
 	 * Stops threads associated with detecting and broadcasting sound events. Also, 
 	 * closes the microphone. After calling this method you would have to call 
@@ -261,6 +275,7 @@ public class SoundLevelDetection {
 		mAmbientNoiseTask.cancel(true); 
 	    mSoundLevelTask.cancel(true); 
 	}
+
 	/**
 	 * Stops threads associated with detecting and broadcasting sound events. Also, 
 	 * closes the microphone. After calling this method you would have to call 
@@ -269,6 +284,7 @@ public class SoundLevelDetection {
 	public void destroySoundLevelDetection(){
 		stopSoundLevelDetection();
 	}
+
 	/**
 	 * @return boolean value indicating if the MediaRecorder with the microphone as 
 	 * its audio source is running and hence listening for sound. 
@@ -276,6 +292,7 @@ public class SoundLevelDetection {
 	public boolean isRunning(){
 		return ! (this.mRecorder == null);
 	}
+
 	/**
 	 * Returns the maximum amplitude detected since last call to this method
 	 * 
@@ -288,6 +305,7 @@ public class SoundLevelDetection {
 			return 0;
 
 	}
+
 	/**
 	 * Converts amplitude to decibels 
 	 * 
@@ -295,12 +313,13 @@ public class SoundLevelDetection {
 	 * 			the amplitude of the last sound detected 
 	 * @return double value representing decibels of last sound detected 
 	 */
-	public double getDecibels(double amp) {
+	public static double getDecibels(double amp) {
 		double dec = 20 * Math.log10(amp);
 		if(dec < 0)
 			dec = 0; 
 		return dec;
 	}
+
 	/**
 	 * CheckAmbientNoiseTask runs continuously after being started in {@link startSoundLevelDetection}. 
 	 * samples sound over time (t = sampleRate * mPollInterval) and takes the average decibel of sample 
@@ -353,6 +372,7 @@ public class SoundLevelDetection {
             }
 		}
     }
+
     /**
 	 * SoundLevelTask runs continuously after being started in {@link startSoundLevelDetection}. 
 	 * samples sound every mPollInterval to determine if a sound action should take place.   
