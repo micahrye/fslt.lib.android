@@ -1,7 +1,6 @@
 package fslt.lib.animation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 
 import fslt.lib.views.ImageMediaView;

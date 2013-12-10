@@ -15,11 +15,8 @@ import android.hardware.Camera;
 import android.media.FaceDetector;
 import android.media.FaceDetector.Face;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.Display;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
@@ -378,7 +375,7 @@ public class CameraFaceDetectionView extends SurfaceView implements SurfaceHolde
 		protected void onPostExecute(Boolean result){
 			mBusyFindFaces = false; 
 			if(result){
-				Toast.makeText(mCtx, "Found your face", 500).show();
+				Toast.makeText(mCtx, "Found your face", Toast.LENGTH_SHORT).show();
 				//TODO: Should we send back the face? 
 				Intent intent = new Intent();
 				intent.setAction(mActionName);

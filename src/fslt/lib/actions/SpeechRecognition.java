@@ -6,10 +6,8 @@
 package fslt.lib.actions;
 
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -209,7 +207,7 @@ public class SpeechRecognition {
 		public void onResults(Bundle results) {
 
 			Log.d("Speech", "onResults");
-			ArrayList strlist = results
+			ArrayList<String> strlist = results
 					.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 			float[] confidence = results
 					.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);

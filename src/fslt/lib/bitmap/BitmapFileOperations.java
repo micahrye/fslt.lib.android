@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.preference.Preference;
 import android.util.DisplayMetrics;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;

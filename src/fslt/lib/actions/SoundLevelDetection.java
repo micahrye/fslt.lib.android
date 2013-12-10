@@ -33,7 +33,6 @@ import java.io.IOException;
  * {@code
  *		// initializing and starting 
  * 		SoundLevelDetection mSoundLevelDetection = new SoundLevelDetection(mCtx); 
- *		mSoundLevelDetection.openMicrophone();
  *		mSoundLevelDetection.startSoundLevelDetection();
  *		//receive broadcast
  *		BroadcastReceiver mSoundLevelReceiver = new BroadcastReceiver(){
@@ -48,8 +47,7 @@ import java.io.IOException;
  *		// louder sounds are detected. 
  *
  *		//when you want to stop and closing up shop
- *    	mSoundLevelDetection.closeMicrophone();
- *    	// mSoundLevelDetection.stopSoundLevelDetection();
+ *    	mSoundLevelDetection.stopSoundLevelDetection();
  *    	// before you leave the activity/application 
  *    	LocalBroadcastManager.getInstance(this.mCtx).unregisterReceiver(mSoundLevelReceiver);
  * 

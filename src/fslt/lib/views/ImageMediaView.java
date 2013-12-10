@@ -1,14 +1,9 @@
 package fslt.lib.views;
 
 import android.content.Context;
-import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
-
-import java.lang.Math;
 
 import fslt.lib.animation.AnimationManager;
 
