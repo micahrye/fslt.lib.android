@@ -175,8 +175,8 @@ public class SoundLevelDetection {
 	 */
 	private void closeMicrophone() {
 		try {
-			if (mRecorder != null && mRecorderStarted) {
-				mRecorder.stop();
+			if (mRecorder != null) {
+				mRecorder.reset();
 				mRecorder.release();
 				mRecorder = null;
 				mRecorderStarted = false;
@@ -199,8 +199,7 @@ public class SoundLevelDetection {
 	 * @see SoundLevelTask
 	 */
 	public void startSoundLevelDetection() {
-		openMicrophone();
-		if (mRecorderStarted) {
+		if (openMicrophone()) {
 			//Allow for concurrent running of tasks
 			mAmbientNoiseTask = new CheckAmbientNoiseTask();
 			mSoundLevelTask = new SoundLevelTask();
@@ -216,10 +215,10 @@ public class SoundLevelDetection {
 	 * resume.
 	 */
 	public void stopSoundLevelDetection() {
+		mAmbientNoiseTask.cancel(false);
+		mSoundLevelTask.cancel(false);
 		NOISY_ENVIRONMENT = true;
 		closeMicrophone();
-		mAmbientNoiseTask.cancel(true);
-		mSoundLevelTask.cancel(true);
 	}
 
 	/**
@@ -229,11 +228,11 @@ public class SoundLevelDetection {
 	 */
 	public double getAmplitude() {
 		int amplitude = 0;
-		if (mRecorder != null) {
+		if (mRecorder != null && mRecorderStarted) {
 			try {
 				amplitude = mRecorder.getMaxAmplitude();
 			} catch (RuntimeException e) {
-
+				Log.d(TAG, e.getMessage());
 			}
 			return amplitude;
 		} else {
@@ -305,7 +304,6 @@ public class SoundLevelDetection {
 					NOISY_ENVIRONMENT = false;
 					//return true;
 				}
-
 			}
 		}
 	}
