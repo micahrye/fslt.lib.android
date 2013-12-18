@@ -70,16 +70,16 @@ public class SoundLevelDetection {
 	//string that is used for local broadcasting, set IntentFilter to this filter for this name. 
 	private final String mActionName;
 
-	private final int mCheckForAmbientNoiseDuration;
-	private final int mPollForSound;
+	private final int mAmbientSamples;
+	private final int mPollInterval;
 	private final Double mSoundThreshold;
-	private final Double mAmbientNoiseThreshold;
+	private final Double mResponse;
 
 	private static String DEFAULT_ACTION_NAME = "fslt.lib.action.soundleveldetection";
-	private static int DEFAULT_AMBIENT_DUR = 500;
+	private static int DEFAULT_AMBIENT_SAMPLES = 5;
 	private static int DEFAULT_POLL_INT = 50;
-	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 87;
-	private static Double DEFAULT_AMBIENT_NOISE = (double) 65;
+	private static Double DEFAULT_RESPONSE = (double) 0.3;
+	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 10;
 
 	/**
 	 * Constructor, note that the default action is
@@ -88,7 +88,7 @@ public class SoundLevelDetection {
 	 * constructor to set parameter values.
 	 */
 	public SoundLevelDetection(Context context) {
-		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_DUR, DEFAULT_POLL_INT, DEFAULT_AMBIENT_NOISE,
+		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_SAMPLES, DEFAULT_POLL_INT, DEFAULT_RESPONSE,
 				DEFAULT_TRIGGER_THRESHOLD);
 	}
 
@@ -97,32 +97,25 @@ public class SoundLevelDetection {
 	 * @param context
 	 * @param actionName
 	 *            the intent filter string to broadcast with
-	 * @param duration
-	 *            in milliseconds to check ambient noise level. Values should be
-	 *            between 250 and 1500 milliseconds. Invalid values will result
-	 *            in default value of 500 ms being used.
+	 * @param ambientSamples
+	 *            How many times to poll for ambient noise.
 	 * @param pollInterval
 	 *            How often this listener checks for loud sounds
-	 * @param noiseThreshold
-	 *            Double value representing decibel value above which it is a
-	 *            noisy environment
+	 * @param response
+	 *            How quickly the ewma for the sound updates. Higher is faster response.
 	 * @param soundLevelThreshold
-	 *            Double value representing decibel value above which we
+	 *            Double value representing decible value above which we
 	 *            interpret something as a trigger
 	 */
-	public SoundLevelDetection(Context context, String actionName, int ambientDuration, int pollInterval, Double noiseThreshold,
+	public SoundLevelDetection(Context context, String actionName, int ambientSamples, int pollInterval, Double response,
 			Double soundLevelThreshold) {
 		mCtx = context;
 		mSoundLevelTask = new SoundLevelTask();
 
 		mActionName = actionName;
-		if (ambientDuration < 250 || ambientDuration > 1500) {
-			ambientDuration = 500;
-		}
-		mCheckForAmbientNoiseDuration = ambientDuration;
-
-		mPollForSound = pollInterval;
-		mAmbientNoiseThreshold = noiseThreshold;
+		mAmbientSamples = ambientSamples;
+		mPollInterval = pollInterval;
+		mResponse = response;
 		mSoundThreshold = soundLevelThreshold;
 	}
 
@@ -266,18 +259,18 @@ public class SoundLevelDetection {
 		@Override
 		protected Boolean doInBackground(Void... params) {
 			Double sum = 0.0;
-			for (int i = 0; i < 6; i++){
+			for (int i = 0; i < mAmbientSamples + 1; i++){
 				if (this.isCancelled()) {
 					return false;
 				}
 				sum += amplitudeToDecibels(getAmplitude());
 				try {
-					Thread.sleep(mPollForSound);
+					Thread.sleep(mPollInterval);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
-			Double ambient = sum/5;
+			Double ambient = sum/mAmbientSamples;
 			Log.d(TAG, "Ambient noise level = " + ambient.toString());
 
 			//Instantiate the current ewma to ambient, won't matter in 5 iterations.
@@ -289,17 +282,18 @@ public class SoundLevelDetection {
 				}
 				// Keep an EWMA
 				Double dec = amplitudeToDecibels(getAmplitude());
-				ewma = .7 * ewma + 0.3 * dec;
+				ewma = (1 - mResponse) * ewma + mResponse * dec;
 
 				sample ++;
-				if (sample > 5){
+				if (sample > 10){
+					// Only print every 10th reading. o/w floods logcat.
 					Log.d(TAG, "Sound Diff : "+ (ewma - ambient));
 					sample = 0;
 				}
 
 				// Trigger if current reading is 10 db higher than ambient
-				if (ewma - ambient > 10) {
-					Log.d(TAG, "I hear a scream!" + (ewma - ambient));
+				if (ewma - ambient > mSoundThreshold) {
+					Log.d(TAG, "I hear a scream! " + (ewma - ambient));
 					Intent intent = new Intent();
 					intent.putExtra("SOUND_DETECTED", true);
 					intent.setAction(mActionName);
@@ -310,7 +304,7 @@ public class SoundLevelDetection {
 				}
 
 				try {
-					Thread.sleep(mPollForSound);
+					Thread.sleep(mPollInterval);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
