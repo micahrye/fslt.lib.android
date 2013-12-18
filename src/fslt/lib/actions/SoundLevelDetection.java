@@ -6,6 +6,7 @@
 package fslt.lib.actions;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import android.content.Context;
 import android.content.Intent;
@@ -64,7 +65,6 @@ public class SoundLevelDetection {
 	private final Context mCtx;
 	private MediaRecorder mRecorder = null;
 	private boolean mRecorderStarted = false;
-	private CheckAmbientNoiseTask mAmbientNoiseTask;
 	private SoundLevelTask mSoundLevelTask;
 
 	//string that is used for local broadcasting, set IntentFilter to this filter for this name. 
@@ -77,11 +77,9 @@ public class SoundLevelDetection {
 
 	private static String DEFAULT_ACTION_NAME = "fslt.lib.action.soundleveldetection";
 	private static int DEFAULT_AMBIENT_DUR = 500;
-	private static int DEFAULT_POLL_INT = 100;
+	private static int DEFAULT_POLL_INT = 50;
 	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 87;
 	private static Double DEFAULT_AMBIENT_NOISE = (double) 65;
-
-	public static boolean NOISY_ENVIRONMENT = true;
 
 	/**
 	 * Constructor, note that the default action is
@@ -115,7 +113,6 @@ public class SoundLevelDetection {
 	public SoundLevelDetection(Context context, String actionName, int ambientDuration, int pollInterval, Double noiseThreshold,
 			Double soundLevelThreshold) {
 		mCtx = context;
-		mAmbientNoiseTask = new CheckAmbientNoiseTask();
 		mSoundLevelTask = new SoundLevelTask();
 
 		mActionName = actionName;
@@ -201,9 +198,7 @@ public class SoundLevelDetection {
 	public void startSoundLevelDetection() {
 		if (openMicrophone()) {
 			//Allow for concurrent running of tasks
-			mAmbientNoiseTask = new CheckAmbientNoiseTask();
 			mSoundLevelTask = new SoundLevelTask();
-			mAmbientNoiseTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			mSoundLevelTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 	}
@@ -215,9 +210,7 @@ public class SoundLevelDetection {
 	 * resume.
 	 */
 	public void stopSoundLevelDetection() {
-		mAmbientNoiseTask.cancel(false);
 		mSoundLevelTask.cancel(false);
-		NOISY_ENVIRONMENT = true;
 		closeMicrophone();
 	}
 
@@ -255,60 +248,6 @@ public class SoundLevelDetection {
 	}
 
 	/**
-	 * CheckAmbientNoiseTask runs continuously after being started in
-	 * {@link startSoundLevelDetection}. samples sound over time (t = sampleRate
-	 * * mPollInterval) and takes the average decibel of sample to compare to
-	 * mAmbientNoiseThreshold to determine if device in noisy environment. If
-	 * noisy it will ignore sound events, since device threshold likely at
-	 * ceiling.
-	 * <p>
-	 * Important that {@link stopSoundLevelDetection} or
-	 * {@link destroySoundLevelDetection} called so that this thread is stopped.
-	 */
-	private class CheckAmbientNoiseTask extends AsyncTask<Void, Void, Boolean> {
-		@Override
-		protected Boolean doInBackground(Void... params) {
-			int sampleRate = 10;
-			int threadSleepTime = mCheckForAmbientNoiseDuration / 10;
-			Double[] samples = new Double[sampleRate];
-			Double sum = 0.0;
-			Double dec = 0.0;
-			//NOTE: if we are polling for sound level ever N ms then 
-			//ambient is updating environment noise var every sampleRate*N ms
-			while (true) {
-				sum = 0.0;
-				dec = 0.0;
-				for (int i = 0; i < sampleRate; i++) {
-					if (this.isCancelled()) {
-						return NOISY_ENVIRONMENT = true;
-					}
-					dec = amplitudeToDecibels(getAmplitude());
-					samples[i] = dec;
-					sum += dec;
-					try {
-						Thread.sleep(threadSleepTime);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-				if (this.isCancelled()) {
-					return NOISY_ENVIRONMENT = true;
-				}
-
-				Double avg_dec = sum / sampleRate;
-				if (avg_dec > mAmbientNoiseThreshold) {
-					Log.d(TAG, "It's too loud here! Noise = " + avg_dec.toString());
-					NOISY_ENVIRONMENT = true;
-				} else {
-					Log.d(TAG, "Noise level is fine. Noise = " + avg_dec.toString());
-					NOISY_ENVIRONMENT = false;
-					//return true;
-				}
-			}
-		}
-	}
-
-	/**
 	 * SoundLevelTask runs continuously after being started in
 	 * {@link startSoundLevelDetection}. samples sound every mPollInterval to
 	 * determine if a sound action should take place. Sound actions only happen
@@ -326,28 +265,54 @@ public class SoundLevelDetection {
 
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			// TODO Auto-generated method stub
+			Double sum = 0.0;
+			for (int i = 0; i < 6; i++){
+				if (this.isCancelled()) {
+					return false;
+				}
+				sum += amplitudeToDecibels(getAmplitude());
+				try {
+					Thread.sleep(mPollForSound);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			Double ambient = sum/5;
+			Log.d(TAG, "Ambient noise level = " + ambient.toString());
+
+			//Instantiate the current ewma to ambient, won't matter in 5 iterations.
+			Double ewma = ambient;
+			int sample = 0;
 			while (true) {
 				if (this.isCancelled()) {
 					return false;
 				}
-				if (!NOISY_ENVIRONMENT) {
-					Double dec = amplitudeToDecibels(getAmplitude());
-					if (dec > mSoundThreshold) {
-						Log.d(TAG, "I hear a scream! Dec = " + dec.toString());
-						Intent intent = new Intent();
-						intent.putExtra("SOUND_DETECTED", true);
-						intent.setAction(mActionName);
-						intent.putExtra("DECIBLES", dec);
-						// istantiator must setup a BroadcastReceiver to list for 
-						// message (mActionName)
-						LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
-					}
-					try {
-						Thread.sleep(mPollForSound);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+				// Keep an EWMA
+				Double dec = amplitudeToDecibels(getAmplitude());
+				ewma = .7 * ewma + 0.3 * dec;
+
+				sample ++;
+				if (sample > 5){
+					Log.d(TAG, "Sound Diff : "+ (ewma - ambient));
+					sample = 0;
+				}
+
+				// Trigger if current reading is 10 db higher than ambient
+				if (ewma - ambient > 10) {
+					Log.d(TAG, "I hear a scream!" + (ewma - ambient));
+					Intent intent = new Intent();
+					intent.putExtra("SOUND_DETECTED", true);
+					intent.setAction(mActionName);
+					intent.putExtra("DECIBLES", dec);
+					// istantiator must setup a BroadcastReceiver to list for 
+					// message (mActionName)
+					LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
+				}
+
+				try {
+					Thread.sleep(mPollForSound);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		}
