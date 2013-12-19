@@ -16,10 +16,13 @@ public class ShakeDetection implements SensorEventListener {
 	private float mAccelCurrent; // current acceleration including gravity
 	private float mAccelLast; // last acceleration including gravity
 	private final float mThreshold;
+	private static float mResponse = 0.1f;
 
 	private static final String SHAKEN = "SHAKEN";
 	private static final String SHAKE_STRENGTH = "SHAKE_STRENGTH";
-	private static final float SHAKE_THRESHOLD_DEFAULT = 7.0f;
+	private static final float SHAKE_THRESHOLD_DEFAULT = 4.0f;
+
+	private int sample;
 
 	private final Context mCtx;
 
@@ -43,15 +46,23 @@ public class ShakeDetection implements SensorEventListener {
 		mAccelLast = mAccelCurrent;
 		mAccelCurrent = (float) Math.sqrt(x * x + y * y + z * z);
 		float delta = mAccelCurrent - mAccelLast;
-		mAccel = mAccel * 0.9f + delta; // perform low-cut filter
+		// Keep a moving average of acceleration.
+		mAccel = (1 - mResponse) * mAccel + Math.abs(mResponse * delta);
 
-		if (mAccel > mThreshold) {
-			Log.d(TAG, "Shaken Strength: " + mAccel);
-			Intent intent = new Intent();
-			intent.putExtra(SHAKEN, true);
-			intent.setAction(TAG);
-			intent.putExtra(SHAKE_STRENGTH, mAccel);
-			LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
+		sample ++;
+		if (sample > 5){
+			// Only check every 5th reading.
+			// o/w floods logcat/lots of shake detects.
+			sample = 0;
+
+			if (mAccel > mThreshold) {
+				Log.d(TAG, "Shaken: " + mAccel);
+				Intent intent = new Intent();
+				intent.putExtra(SHAKEN, true);
+				intent.setAction(TAG);
+				intent.putExtra(SHAKE_STRENGTH, mAccel);
+				LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
+			}
 		}
 	}
 
