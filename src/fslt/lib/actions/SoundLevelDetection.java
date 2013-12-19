@@ -73,10 +73,13 @@ public class SoundLevelDetection {
 	private static String DEFAULT_ACTION_NAME = "fslt.lib.action.soundleveldetection";
 	private static int DEFAULT_AMBIENT_DUR = 500;
 	private static int DEFAULT_POLL_INT = 100;
-	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 87;
+	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 73;
 	private static Double DEFAULT_AMBIENT_NOISE = (double) 65;
 
 	public static boolean NOISY_ENVIRONMENT = true;
+	
+	// set true when audio is playing so that soundlevel ignores it
+	public boolean audioPlaying = false; 
 
     /**
      * Constructor, note that the default action is 
@@ -319,7 +322,7 @@ public class SoundLevelDetection {
 				}
 				if(!NOISY_ENVIRONMENT){
 					Double dec = amplitudeToDecibels(getAmplitude());
-					if (dec > mSoundThreshold) {
+					if (dec > mSoundThreshold && !audioPlaying) {
 						Log.d(TAG, "I hear a scream! Dec = " + dec.toString());
 						Intent intent = new Intent(); 
 						intent.putExtra("SOUND_DETECTED", true);
