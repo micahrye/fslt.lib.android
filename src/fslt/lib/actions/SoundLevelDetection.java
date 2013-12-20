@@ -116,10 +116,10 @@ public class SoundLevelDetection {
 		mSoundLevelTask = new SoundLevelTask();
 
 		mActionName = actionName;
-		mAmbientSamples = 20; //ambientSamples;
+		mAmbientSamples = ambientSamples;
 		mPollInterval = pollInterval;
 		mResponse = response;
-		mSoundThreshold = 50.0d; //soundLevelThreshold;
+		mSoundThreshold = soundLevelThreshold;
 	}
 
 	/**
