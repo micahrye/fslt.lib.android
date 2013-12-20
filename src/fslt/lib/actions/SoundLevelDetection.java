@@ -6,7 +6,6 @@
 package fslt.lib.actions;
 
 import java.io.IOException;
-import java.util.LinkedList;
 
 import android.content.Context;
 import android.content.Intent;
@@ -76,14 +75,14 @@ public class SoundLevelDetection {
 	private final Double mResponse;
 
 	private static String DEFAULT_ACTION_NAME = "fslt.lib.action.soundleveldetection";
-	
-	// set true when audio is playing so that soundlevel ignores it
-	public boolean audioPlaying = false; 
 
-	private static int DEFAULT_AMBIENT_SAMPLES = 5;
+	// set true when audio is playing so that soundlevel ignores it
+	public boolean audioPlaying = false;
+
+	private static int DEFAULT_AMBIENT_SAMPLES = 20;
 	private static int DEFAULT_POLL_INT = 50;
 	private static Double DEFAULT_RESPONSE = (double) 0.3;
-	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 10;
+	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 15000;
 
 	/**
 	 * Constructor, note that the default action is
@@ -92,8 +91,7 @@ public class SoundLevelDetection {
 	 * constructor to set parameter values.
 	 */
 	public SoundLevelDetection(Context context) {
-		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_SAMPLES, DEFAULT_POLL_INT, DEFAULT_RESPONSE,
-				DEFAULT_TRIGGER_THRESHOLD);
+		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_SAMPLES, DEFAULT_POLL_INT, DEFAULT_RESPONSE, DEFAULT_TRIGGER_THRESHOLD);
 	}
 
 	/**
@@ -106,7 +104,8 @@ public class SoundLevelDetection {
 	 * @param pollInterval
 	 *            How often this listener checks for loud sounds
 	 * @param response
-	 *            How quickly the ewma for the sound updates. Higher is faster response.
+	 *            How quickly the ewma for the sound updates. Higher is faster
+	 *            response.
 	 * @param soundLevelThreshold
 	 *            Double value representing decible value above which we
 	 *            interpret something as a trigger
@@ -231,20 +230,6 @@ public class SoundLevelDetection {
 	}
 
 	/**
-	 * Converts amplitude to decibels
-	 * 
-	 * @param amp
-	 *            the amplitude of the last sound detected
-	 * @return double value representing decibels of last sound detected
-	 */
-	public static double amplitudeToDecibels(double amp) {
-		double dec = 20 * Math.log10(amp);
-		if (dec < 0)
-			dec = 0;
-		return dec;
-	}
-
-	/**
 	 * SoundLevelTask runs continuously after being started in
 	 * {@link startSoundLevelDetection}. samples sound every mPollInterval to
 	 * determine if a sound action should take place. Sound actions only happen
@@ -262,42 +247,24 @@ public class SoundLevelDetection {
 
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			Double sum = 0.0;
-			for (int i = 0; i < mAmbientSamples + 1; i++){
-				if (this.isCancelled()) {
-					return false;
-				}
-				sum += amplitudeToDecibels(getAmplitude());
-				try {
-					Thread.sleep(mPollInterval);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			Double ambient = sum/mAmbientSamples;
-			Log.d(TAG, "Ambient noise level = " + ambient.toString());
 
-			//Instantiate the current ewma to ambient, won't matter in 5 iterations.
-			Double ewma = ambient;
-			int sample = 0;
+			Double ewma = getAmplitude();
+
+			int samples = 0;
 			while (true) {
 				if (this.isCancelled()) {
 					return false;
 				}
 				// Keep an EWMA
-				Double dec = amplitudeToDecibels(getAmplitude());
+				Double dec = getAmplitude();
 				ewma = (1 - mResponse) * ewma + mResponse * dec;
 
-				sample ++;
-				if (sample > 10){
-					// Only print every 10th reading. o/w floods logcat.
-					Log.d(TAG, "Sound Diff : "+ (ewma - ambient));
-					sample = 0;
+				if (samples < mAmbientSamples) {
+					samples++;
 				}
 
-				// Trigger if current reading is 10 db higher than ambient
-				if ( (ewma - ambient > mSoundThreshold) && !audioPlaying ) {
-					Log.d(TAG, "I hear a scream! " + (ewma - ambient));
+				if (samples >= mAmbientSamples && (dec - ewma > mSoundThreshold) && !audioPlaying) {
+					// Log.d(TAG, "I hear a scream! " + (dec - ewma) + " " + dec);
 					Intent intent = new Intent();
 					intent.putExtra("SOUND_DETECTED", true);
 					intent.setAction(mActionName);
