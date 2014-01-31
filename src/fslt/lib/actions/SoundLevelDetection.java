@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -77,12 +78,12 @@ public class SoundLevelDetection {
 	private static String DEFAULT_ACTION_NAME = "fslt.lib.action.soundleveldetection";
 
 	// set true when audio is playing so that soundlevel ignores it
-	public boolean audioPlaying = false;
+	public static boolean AUDIO_PLAYING = false;
 
 	private static int DEFAULT_AMBIENT_SAMPLES = 20;
 	private static int DEFAULT_POLL_INT = 50;
 	private static Double DEFAULT_RESPONSE = (double) 0.3;
-	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 15000;
+	private static Double DEFAULT_TRIGGER_THRESHOLD = (double) 19500;
 
 	/**
 	 * Constructor, note that the default action is
@@ -91,7 +92,8 @@ public class SoundLevelDetection {
 	 * constructor to set parameter values.
 	 */
 	public SoundLevelDetection(Context context) {
-		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_SAMPLES, DEFAULT_POLL_INT, DEFAULT_RESPONSE, DEFAULT_TRIGGER_THRESHOLD);
+		this(context, DEFAULT_ACTION_NAME, DEFAULT_AMBIENT_SAMPLES, DEFAULT_POLL_INT, 
+				DEFAULT_RESPONSE, DEFAULT_TRIGGER_THRESHOLD);
 	}
 
 	/**
@@ -198,7 +200,21 @@ public class SoundLevelDetection {
 			mSoundLevelTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 	}
-
+	
+    private static Handler handler = new Handler();
+    private static final Runnable r = new Runnable()
+    {
+    	@Override
+        public void run() 
+        {
+        	SoundLevelDetection.AUDIO_PLAYING = false; 
+        }
+    };
+    
+	static public void ignoreSoundDetected(int ignoreInterval){
+        handler.postDelayed(r, ignoreInterval);
+        SoundLevelDetection.AUDIO_PLAYING = true; 
+	}
 	/**
 	 * Stops threads associated with detecting and broadcasting sound events.
 	 * Also, closes the microphone. After calling this method you would have to
@@ -257,14 +273,17 @@ public class SoundLevelDetection {
 				}
 				// Keep an EWMA
 				Double dec = getAmplitude();
-				ewma = (1 - mResponse) * ewma + mResponse * dec;
+				ewma = mResponse * dec + (1 - mResponse) * ewma;
 
 				if (samples < mAmbientSamples) {
 					samples++;
 				}
 
-				if (samples >= mAmbientSamples && (dec - ewma > mSoundThreshold) && !audioPlaying) {
+				Double diff = dec - ewma; 
+				
+				if (samples >= mAmbientSamples && (dec - ewma > mSoundThreshold) && !AUDIO_PLAYING) {
 					// Log.d(TAG, "I hear a scream! " + (dec - ewma) + " " + dec);
+					diff = diff; 
 					Intent intent = new Intent();
 					intent.putExtra("SOUND_DETECTED", true);
 					intent.setAction(mActionName);
@@ -272,6 +291,8 @@ public class SoundLevelDetection {
 					// istantiator must setup a BroadcastReceiver to list for 
 					// message (mActionName)
 					LocalBroadcastManager.getInstance(mCtx).sendBroadcast(intent);
+					// resample ambient sound 
+					samples = 0; 
 				}
 
 				try {
