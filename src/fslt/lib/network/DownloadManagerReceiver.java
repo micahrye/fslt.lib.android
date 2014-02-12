@@ -106,7 +106,7 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
 
 		Request request = new Request(Uri.parse(url));
 		request.allowScanningByMediaScanner();
-		request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+		request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
 		// Check if file is currently being downloaded, if so do not download it. 
 
